@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     'bot.apps.BotConfig',
+    'accounts.apps.AccountsConfig',
 ]
 
 MIDDLEWARE = [

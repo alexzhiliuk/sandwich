@@ -5,12 +5,11 @@ from django.views.decorators.csrf import csrf_exempt
 
 import telebot
 
-WEBHOOK = "8fo2jlap55.loclx.io"
+WEBHOOK = "awt7erlcng.loclx.io"
 
 bot = telebot.TeleBot(settings.BOT_TOKEN)
 bot.remove_webhook()
 bot.set_webhook(WEBHOOK)
-# https://api.telegram.org/bot6734680296:AAGIYNPcYGlVBKI0tMq8__6SFshRfW2O9_w/setWebhook?url=https://13ac-151-249-178-223.ngrok-free.app/
 
 
 @csrf_exempt
