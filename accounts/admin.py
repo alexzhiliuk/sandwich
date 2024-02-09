@@ -6,6 +6,7 @@ from .models import *
 class OwnerAdmin(admin.ModelAdmin):
     readonly_fields = ["created_at", "tg_id"]
     search_fields = ["unp", "fio", "phone"]
+    list_filter = ["is_active"]
     fieldsets = [
         (
             "Персональная информация",
@@ -45,6 +46,7 @@ class EmployeeAdmin(admin.ModelAdmin):
     readonly_fields = ["created_at", "tg_id"]
     search_fields = ["owner", "fio", "phone"]
     autocomplete_fields = ["owner", "point"]
+    list_filter = ["is_active"]
     fieldsets = [
         (
             "Владелец/точка",
