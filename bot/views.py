@@ -5,11 +5,13 @@ from django.views.decorators.csrf import csrf_exempt
 
 import telebot
 
-WEBHOOK = "awt7erlcng.loclx.io"
+WEBHOOK = "dn0w9qpplo.loclx.io"
 
 bot = telebot.TeleBot(settings.BOT_TOKEN)
 bot.remove_webhook()
 bot.set_webhook(WEBHOOK)
+
+from accounts.views import *
 
 
 @csrf_exempt
@@ -23,11 +25,5 @@ def index(request):
 
 @bot.message_handler(commands=['start'])
 def start(message: telebot.types.Message):
-    name = ''
-    if message.from_user.last_name is None:
-        name = f'{message.from_user.first_name}'
-    else:
-        name = f'{message.from_user.first_name} {message.from_user.last_name}'
-    bot.send_message(message.chat.id, f'Привет! {name}\n'
-                                      f'Я бот, который будет спамить вам беседу :)\n\n'
-                                      f'Чтобы узнать больше команд, напишите /help')
+
+    bot.send_message(message.chat.id, 'Стартовое сообщение. Команды: \n/reg\n/menu')

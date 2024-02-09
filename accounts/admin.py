@@ -4,13 +4,13 @@ from .models import *
 
 @admin.register(Owner)
 class OwnerAdmin(admin.ModelAdmin):
-    readonly_fields = ["created_at"]
+    readonly_fields = ["created_at", "tg_id"]
     search_fields = ["unp", "fio", "phone"]
     fieldsets = [
         (
             "Персональная информация",
             {
-                "fields": ["unp", "fio", "username", "phone"],
+                "fields": ["unp", "fio", "phone", "tg_id"],
             },
         ),
         (
@@ -23,6 +23,12 @@ class OwnerAdmin(admin.ModelAdmin):
             "Важные даты",
             {
                 "fields": ["created_at"],
+            },
+        ),
+        (
+            "Доступ",
+            {
+                "fields": ["is_active"],
             },
         ),
     ]
@@ -36,7 +42,7 @@ class PointAdmin(admin.ModelAdmin):
 
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
-    readonly_fields = ["created_at"]
+    readonly_fields = ["created_at", "tg_id"]
     search_fields = ["owner", "fio", "phone"]
     autocomplete_fields = ["owner", "point"]
     fieldsets = [
@@ -49,7 +55,7 @@ class EmployeeAdmin(admin.ModelAdmin):
         (
             "Персональная информация",
             {
-                "fields": ["fio", "username", "phone"],
+                "fields": ["fio", "phone", "tg_id"],
             },
         ),
         (
@@ -64,5 +70,10 @@ class EmployeeAdmin(admin.ModelAdmin):
                 "fields": ["created_at"],
             },
         ),
+        (
+            "Доступ",
+            {
+                "fields": ["is_active"],
+            },
+        ),
     ]
-

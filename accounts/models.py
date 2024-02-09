@@ -5,10 +5,11 @@ class Owner(models.Model):
 
     unp = models.CharField(max_length=32, unique=True, db_index=True, verbose_name="УНП")
     fio = models.CharField(max_length=256, unique=True, verbose_name="ФИО")
-    username = models.CharField(max_length=64, unique=True, verbose_name="Юзернейм в Telegram")
+    tg_id = models.CharField(max_length=64, unique=True, verbose_name="ID в Telegram")
     phone = models.CharField(max_length=32, unique=True, verbose_name="Номер телефона")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата регистрации")
     has_notifications = models.BooleanField(default=True, verbose_name="Включить ведомления")
+    is_active = models.BooleanField(default=False, verbose_name="Подтвердить регистрацию")
 
     def __str__(self):
         return f"{self.unp} {self.fio}"
@@ -36,10 +37,11 @@ class Employee(models.Model):
     owner = models.ForeignKey(Owner, related_name="staff", on_delete=models.PROTECT, verbose_name="Владелец")
     point = models.ForeignKey(Point, related_name="staff", null=True, blank=True, on_delete=models.SET_NULL, verbose_name="Точка")
     fio = models.CharField(max_length=256, unique=True, verbose_name="ФИО")
-    username = models.CharField(max_length=64, unique=True, verbose_name="Юзернейм в Telegram")
+    tg_id = models.CharField(max_length=64, unique=True, verbose_name="ID в Telegram")
     phone = models.CharField(max_length=32, unique=True, verbose_name="Номер телефона")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата регистрации")
     has_notifications = models.BooleanField(default=True, verbose_name="Уведомления")
+    is_active = models.BooleanField(default=False, verbose_name="Активный")
 
     def __str__(self):
         return f"{self.owner.unp} {self.fio}"
