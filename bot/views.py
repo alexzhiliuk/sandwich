@@ -7,7 +7,7 @@ from accounts.markups import *
 
 import telebot
 
-WEBHOOK = "cfpbv20uml.loclx.io"
+WEBHOOK = "30x1rhldpb.loclx.io"
 
 bot = telebot.TeleBot(settings.BOT_TOKEN)
 bot.remove_webhook()
@@ -27,13 +27,31 @@ def index(request):
 
 @bot.message_handler(commands=['start'])
 def start(message: telebot.types.Message):
+    parameter = message.text.split(" ")[-1]
+
+    if parameter.isnumeric():
+
+        user_id = message.from_user.id
+
+        if Owner.objects.filter(tg_id=user_id).exists() or Employee.objects.filter(tg_id=user_id).exists():
+            bot.send_message(user_id, 'Вы уже зарегистрированы в системе!')
+            return
+
+        owner = Owner.objects.filter(tg_id=parameter).first()
+        if not owner:
+            bot.send_message(message.from_user.id,
+                             "С регистрационной ссылкой что-то не так. Обратитесь к администратору")
+            return
+
+        send = bot.send_message(message.from_user.id, "Введите ваше ФИО:")
+        bot.register_next_step_handler(send, process_employee_fio, owner)
+        return
 
     bot.send_message(message.chat.id, 'Стартовое сообщение. Команды: \n/reg\n/menu')
 
 
 @bot.message_handler(commands=['menu'])
 def menu(message: telebot.types.Message):
-
     user_id = message.from_user.id
 
     if Owner.objects.filter(tg_id=user_id).exists():

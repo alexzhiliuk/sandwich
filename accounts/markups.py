@@ -5,6 +5,7 @@ def owner_menu_markup():
     markup = InlineKeyboardMarkup()
 
     markup.add(InlineKeyboardButton("Мои точки", callback_data="points"))
+    markup.add(InlineKeyboardButton("Мои сотрудники", callback_data="staff"))
 
     return markup
 
@@ -37,5 +38,17 @@ def confirm_markup(confirm_btn, back_btn):
 
     markup.add(InlineKeyboardButton(confirm_btn["text"], callback_data=confirm_btn["callback"]))
     markup.add(InlineKeyboardButton(back_btn["text"], callback_data=back_btn["callback"]))
+
+    return markup
+
+
+def staff_markup(staff):
+
+    markup = InlineKeyboardMarkup()
+
+    for employee in staff:
+        markup.add(InlineKeyboardButton(employee["fio"], callback_data=f"employee_{employee['id']}"))
+
+    markup.add(InlineKeyboardButton("Добавить", callback_data="add_employee"))
 
     return markup
