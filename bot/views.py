@@ -3,9 +3,11 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 
+from accounts.markups import *
+
 import telebot
 
-WEBHOOK = "dn0w9qpplo.loclx.io"
+WEBHOOK = "cfpbv20uml.loclx.io"
 
 bot = telebot.TeleBot(settings.BOT_TOKEN)
 bot.remove_webhook()
@@ -27,3 +29,16 @@ def index(request):
 def start(message: telebot.types.Message):
 
     bot.send_message(message.chat.id, 'Стартовое сообщение. Команды: \n/reg\n/menu')
+
+
+@bot.message_handler(commands=['menu'])
+def menu(message: telebot.types.Message):
+
+    user_id = message.from_user.id
+
+    if Owner.objects.filter(tg_id=user_id).exists():
+        bot.send_message(user_id, 'Меню:', reply_markup=owner_menu_markup())
+    elif Employee.objects.filter(tg_id=user_id).exists():
+        pass
+    else:
+        bot.send_message(user_id, "Вы не зарегистрированы либо администратор еще не подтвердил вашу регистрацию!")
