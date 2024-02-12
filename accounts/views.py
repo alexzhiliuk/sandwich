@@ -295,18 +295,23 @@ def owner_employee_point_choice(data: telebot.types.CallbackQuery):
 def owner_employee_set_point(data: telebot.types.CallbackQuery):
     employee_id = int(data.data.split("_")[1])
     employee = Employee.objects.filter(id=employee_id).first()
-    point_id = int(data.data.split("_")[-1])
-    point = Point.objects.filter(id=point_id).first()
-
     if not employee:
         bot.send_message(data.from_user.id, "Данного сотрудника не существует")
         return
-    if not point:
-        bot.send_message(data.from_user.id, "Данной точки не существует")
-        return
 
-    employee.point = point
-    employee.save()
+    point_id = int(data.data.split("_")[-1])
+    if point_id == 0:
+        employee.unset_point()
+        bot.send_message(data.from_user.id, "Сотрудник откреплен от точки!")
+    else:
+        point = Point.objects.filter(id=point_id).first()
+
+        if not point:
+            bot.send_message(data.from_user.id, "Данной точки не существует")
+            return
+
+        employee.set_point(point)
+        bot.send_message(data.from_user.id, "Сотруднику назначена новая точка!")
 
     bot.edit_message_text(
         f"Сотрудник {employee.fio}\nТочка: {employee.point.address if employee.point else 'нет точки'}",
@@ -314,7 +319,6 @@ def owner_employee_set_point(data: telebot.types.CallbackQuery):
         data.message.id,
         reply_markup=employee_markup(employee)
     )
-    bot.send_message(data.from_user.id, "Сотруднику назначена новая точка!")
 
 
 bot.add_custom_filter(IsOwner())

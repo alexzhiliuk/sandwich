@@ -23,6 +23,7 @@ def points_markup(points, employee=None):
     if not employee:
         markup.add(InlineKeyboardButton("Добавить", callback_data="add_point"))
     else:
+        markup.add(InlineKeyboardButton("Открепить от точки", callback_data=f"employee_{employee.id}_point_0"))
         markup.add(InlineKeyboardButton("Назад", callback_data=f"employee_{employee.id}"))
 
     return markup

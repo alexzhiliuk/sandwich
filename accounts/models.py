@@ -49,3 +49,11 @@ class Employee(models.Model):
     class Meta:
         verbose_name = "Сотрудник"
         verbose_name_plural = "Сотрудники"
+
+    def set_point(self, point: Point):
+        self.point = point
+        self.save()
+
+    def unset_point(self):
+        self.point = None
+        self.save()
