@@ -7,7 +7,7 @@ from accounts.markups import *
 
 import telebot
 
-WEBHOOK = "30x1rhldpb.loclx.io"
+WEBHOOK = "vk28agyrdi.loclx.io"
 
 bot = telebot.TeleBot(settings.BOT_TOKEN)
 bot.remove_webhook()

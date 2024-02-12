@@ -10,20 +10,25 @@ def owner_menu_markup():
     return markup
 
 
-def points_markup(points):
-
+def points_markup(points, employee=None):
     markup = InlineKeyboardMarkup()
 
     for point in points:
-        markup.add(InlineKeyboardButton(point["address"], callback_data=f"point_{point['id']}"))
+        if not employee:
+            markup.add(InlineKeyboardButton(point["address"], callback_data=f"point_{point['id']}"))
+        else:
+            markup.add(
+                InlineKeyboardButton(point["address"], callback_data=f"employee_{employee.id}_point_{point['id']}"))
 
-    markup.add(InlineKeyboardButton("Добавить", callback_data="add_point"))
+    if not employee:
+        markup.add(InlineKeyboardButton("Добавить", callback_data="add_point"))
+    else:
+        markup.add(InlineKeyboardButton("Назад", callback_data=f"employee_{employee.id}"))
 
     return markup
 
 
 def point_markup(point):
-
     markup = InlineKeyboardMarkup()
 
     markup.add(InlineKeyboardButton("Редактировать", callback_data=f"point_edit_{point.id}"))
@@ -43,12 +48,21 @@ def confirm_markup(confirm_btn, back_btn):
 
 
 def staff_markup(staff):
-
     markup = InlineKeyboardMarkup()
 
     for employee in staff:
         markup.add(InlineKeyboardButton(employee["fio"], callback_data=f"employee_{employee['id']}"))
 
     markup.add(InlineKeyboardButton("Добавить", callback_data="add_employee"))
+
+    return markup
+
+
+def employee_markup(employee):
+    markup = InlineKeyboardMarkup()
+
+    markup.add(InlineKeyboardButton("Изменить точку", callback_data=f"employee_{employee.id}_point"))
+    markup.add(InlineKeyboardButton("Удалить", callback_data=f"employee_delete_{employee.id}"))
+    markup.add(InlineKeyboardButton("Назад", callback_data=f"back_staff"))
 
     return markup

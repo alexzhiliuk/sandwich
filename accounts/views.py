@@ -256,4 +256,65 @@ def process_employee_phone(message: telebot.types.Message, owner, fio: str):
         bot.send_message(message.chat.id, "Регистрация завершена!")
 
 
+@bot.callback_query_handler(is_owner=True, func=lambda data: re.fullmatch(r"employee_\d+", data.data))
+def owner_employee(data: telebot.types.CallbackQuery):
+    employee_id = int(data.data.split("_")[-1])
+    employee = Employee.objects.filter(id=employee_id).select_related("point").first()
+
+    if not employee:
+        bot.send_message(data.from_user.id, "Данного сотрудника не существует")
+        return
+
+    bot.edit_message_text(
+        f"Сотрудник {employee.fio}\nТочка: {employee.point.address if employee.point else 'нет точки'}",
+        data.from_user.id,
+        data.message.id,
+        reply_markup=employee_markup(employee)
+    )
+
+
+@bot.callback_query_handler(is_owner=True, func=lambda data: re.fullmatch(r"employee_\d+_point", data.data))
+def owner_employee_point_choice(data: telebot.types.CallbackQuery):
+    employee_id = int(data.data.split("_")[1])
+    employee = Employee.objects.filter(id=employee_id).select_related("point").first()
+
+    if not employee:
+        bot.send_message(data.from_user.id, "Данного сотрудника не существует")
+        return
+
+    bot.edit_message_text(
+        f"Сотрудник {employee.fio}\nВыберите новую точку:",
+        data.from_user.id,
+        data.message.id,
+        reply_markup=points_markup(Point.objects.filter(owner__tg_id=data.from_user.id).values("id", "address"),
+                                   employee)
+    )
+
+
+@bot.callback_query_handler(is_owner=True, func=lambda data: re.fullmatch(r"employee_\d+_point_\d+", data.data))
+def owner_employee_set_point(data: telebot.types.CallbackQuery):
+    employee_id = int(data.data.split("_")[1])
+    employee = Employee.objects.filter(id=employee_id).first()
+    point_id = int(data.data.split("_")[-1])
+    point = Point.objects.filter(id=point_id).first()
+
+    if not employee:
+        bot.send_message(data.from_user.id, "Данного сотрудника не существует")
+        return
+    if not point:
+        bot.send_message(data.from_user.id, "Данной точки не существует")
+        return
+
+    employee.point = point
+    employee.save()
+
+    bot.edit_message_text(
+        f"Сотрудник {employee.fio}\nТочка: {employee.point.address if employee.point else 'нет точки'}",
+        data.from_user.id,
+        data.message.id,
+        reply_markup=employee_markup(employee)
+    )
+    bot.send_message(data.from_user.id, "Сотруднику назначена новая точка!")
+
+
 bot.add_custom_filter(IsOwner())
