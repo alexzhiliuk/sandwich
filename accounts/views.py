@@ -161,13 +161,14 @@ def process_editing_point(message: telebot.types.Message, message_id, point):
 @bot.callback_query_handler(is_owner=True, func=lambda data: re.fullmatch(r"point_delete_\d+", data.data))
 def delete_point(data: telebot.types.CallbackQuery):
     bot.edit_message_text(
-        f"{data.message.text}. Удалить?",
+        f"{data.message.text}. Удалить?\n<b>Все сотрудники, привязанные к данной точке, будут отвязаны</b>",
         data.from_user.id,
         data.message.id,
         reply_markup=confirm_markup(
             {"text": "Удалить", "callback": f"confirm_{data.data}"},
             {"text": "Отмена", "callback": f"{data.data.replace('_delete', '')}"}
-        )
+        ),
+        parse_mode="HTML"
     )
 
 
@@ -319,6 +320,42 @@ def owner_employee_set_point(data: telebot.types.CallbackQuery):
         data.message.id,
         reply_markup=employee_markup(employee)
     )
+
+
+@bot.callback_query_handler(is_owner=True, func=lambda data: re.fullmatch(r"employee_delete_\d+", data.data))
+def delete_employee(data: telebot.types.CallbackQuery):
+    bot.edit_message_text(
+        f"{data.message.text}\n Удалить сотрудника?",
+        data.from_user.id,
+        data.message.id,
+        reply_markup=confirm_markup(
+            {"text": "Удалить", "callback": f"confirm_{data.data}"},
+            {"text": "Отмена", "callback": f"{data.data.replace('_delete', '')}"}
+        )
+    )
+
+
+@bot.callback_query_handler(is_owner=True, func=lambda data: re.fullmatch(r"confirm_employee_delete_\d+", data.data))
+def confirm_delete_employee(data: telebot.types.CallbackQuery):
+    employee_id = int(data.data.split("_")[-1])
+    employee = Employee.objects.filter(id=employee_id).first()
+
+    if not employee:
+        bot.send_message(data.from_user.id, "Данной точки не существует")
+        return
+
+    fio = employee.fio
+    employee.delete()
+    bot.send_message(data.from_user.id, f"Сотрудник {fio} удален!")
+
+    staff = Owner.objects.get(tg_id=data.from_user.id).staff.all().values("id", "fio")
+    bot.edit_message_text(
+        "Ваши сотрудники:",
+        data.from_user.id,
+        data.message.id,
+        reply_markup=staff_markup(staff)
+    )
+
 
 
 bot.add_custom_filter(IsOwner())
