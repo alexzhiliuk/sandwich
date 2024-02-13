@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     
     'bot.apps.BotConfig',
     'accounts.apps.AccountsConfig',
+    'orders.apps.OrdersConfig',
 ]
 
 MIDDLEWARE = [
