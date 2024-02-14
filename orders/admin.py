@@ -49,30 +49,17 @@ class OrderAdmin(admin.ModelAdmin):
         html = '<span>Цена: {price} руб.</span><br><span>Количество: {count}</span>'
         return format_html(''.join(html.format(price=price, count=count)))
 
-
-# fieldsets = [
-#         (
-#             "Персональная информация",
-#             {
-#                 "fields": ["unp", "fio", "phone", "tg_id"],
-#             },
-#         ),
-#         (
-#             "Уведомления",
-#             {
-#                 "fields": ["has_notifications"],
-#             },
-#         ),
-#         (
-#             "Важные даты",
-#             {
-#                 "fields": ["created_at"],
-#             },
-#         ),
-#         (
-#             "Доступ",
-#             {
-#                 "fields": ["is_active"],
-#             },
-#         ),
-#     ]
+    fieldsets = [
+        (
+            "Кто заказал",
+            {
+                "fields": ["owner", "employee"],
+            },
+        ),
+        (
+            "Информация",
+            {
+                "fields": ["pickup", "created_at", "result"],
+            },
+        )
+    ]

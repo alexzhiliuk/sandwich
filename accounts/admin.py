@@ -29,7 +29,7 @@ class OwnerAdmin(admin.ModelAdmin):
         (
             "Доступ",
             {
-                "fields": ["is_active"],
+                "fields": ["pickup", "is_active"],
             },
         ),
     ]

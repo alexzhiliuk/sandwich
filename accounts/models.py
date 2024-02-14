@@ -10,6 +10,7 @@ class Owner(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата регистрации")
     has_notifications = models.BooleanField(default=True, verbose_name="Включить ведомления")
     is_active = models.BooleanField(default=False, verbose_name="Подтвердить регистрацию")
+    pickup = models.BooleanField(default=False, verbose_name="Разрешить самовывоз")
 
     def __str__(self):
         return f"{self.unp} {self.fio}"

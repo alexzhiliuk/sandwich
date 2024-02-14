@@ -49,7 +49,7 @@ class Order(models.Model):
     employee = models.ForeignKey(Employee, related_name="orders", on_delete=models.SET_NULL, null=True, blank=True,
                                  verbose_name="Сотрудник")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
-    pickup = models.BooleanField(default=False, verbose_name="Самовыоз")
+    pickup = models.BooleanField(default=False, verbose_name="Самовывоз")
 
     def __str__(self):
         if self.owner:
