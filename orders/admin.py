@@ -32,8 +32,9 @@ class OrderItemInline(admin.TabularInline):
 
     @admin.display(description='Цена')
     def price(self, obj):
-        html = '<span>{price} руб.</span>'
-        return format_html(''.join(html.format(price=obj.price)))
+        price = obj.price
+        html = '<span><b>{price} руб.</b><br>({piece} руб. за шт.)</span>'
+        return format_html(''.join(html.format(price=price, piece=round(price / obj.count, 2))))
 
 
 @admin.register(Order)

@@ -101,10 +101,13 @@ class OrderItem(models.Model):
         verbose_name_plural = "Элементы заказов"
         unique_together = [["order", "product"]]
 
+    def get_special_price_for_product(self):
+        owner = self.order.owner or self.order.employee.owner
+        return self.product.get_special_price_for_user(owner)
+
     @property
     def price(self):
-        owner = self.order.owner or self.order.employee.owner
-        special_price = SpecialPrice.objects.filter(product=self.product, owner=owner).first()
+        special_price = self.get_special_price_for_product()
 
         if special_price:
             return round(special_price.price * self.count, 2)
