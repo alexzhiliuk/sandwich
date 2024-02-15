@@ -42,6 +42,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = ["owner", "employee", "created_at"]
     inlines = [OrderItemInline]
     readonly_fields = ["created_at", "result"]
+    list_display_links = ["owner", "employee"]
 
     @admin.display(description='Итог')
     def result(self, obj):

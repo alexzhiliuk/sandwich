@@ -28,6 +28,16 @@ class Product(models.Model):
         verbose_name = "Продукт"
         verbose_name_plural = "Продукция"
 
+    def get_special_price_for_user(self, owner):
+        special_price = SpecialPrice.objects.filter(product=self, owner=owner).first()
+        return special_price
+
+    def generate_message(self, owner):
+        special_price = self.get_special_price_for_user(owner)
+        if special_price:
+            return f"<b>{self.name}</b>\n{special_price.price} руб."
+        return f"<b>{self.name}</b>\n{self.price} руб."
+
 
 class SpecialPrice(models.Model):
     owner = models.ForeignKey(Owner, related_name="special_prices", on_delete=models.CASCADE, verbose_name="Владелец")
@@ -73,6 +83,10 @@ class Order(models.Model):
             price += item.price
         return count, price
 
+    def fill(self, ordered_items):
+        for product, count in ordered_items.items():
+            OrderItem.objects.create(order=self, product=product, count=count)
+
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name="items", on_delete=models.CASCADE, verbose_name="Заказ")
@@ -93,6 +107,6 @@ class OrderItem(models.Model):
         special_price = SpecialPrice.objects.filter(product=self.product, owner=owner).first()
 
         if special_price:
-            return special_price.price * self.count
+            return round(special_price.price * self.count, 2)
 
-        return self.product.price * self.count
+        return round(self.product.price * self.count, 2)

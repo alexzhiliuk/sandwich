@@ -7,13 +7,14 @@ from accounts.markups import *
 
 import telebot
 
-WEBHOOK = "atqz1iohio.loclx.io"
+WEBHOOK = "cdspxskpds.loclx.io"
 
 bot = telebot.TeleBot(settings.BOT_TOKEN)
 bot.remove_webhook()
 bot.set_webhook(WEBHOOK)
 
 from accounts.views import *
+from orders.views import *
 
 
 @csrf_exempt
@@ -57,6 +58,6 @@ def menu(message: telebot.types.Message):
     if Owner.objects.filter(tg_id=user_id).exists():
         bot.send_message(user_id, 'Меню:', reply_markup=owner_menu_markup())
     elif Employee.objects.filter(tg_id=user_id).exists():
-        pass
+        bot.send_message(user_id, 'Меню:', reply_markup=employee_menu_markup())
     else:
         bot.send_message(user_id, "Вы не зарегистрированы либо администратор еще не подтвердил вашу регистрацию!")

@@ -6,6 +6,15 @@ def owner_menu_markup():
 
     markup.add(InlineKeyboardButton("Мои точки", callback_data="points"))
     markup.add(InlineKeyboardButton("Мои сотрудники", callback_data="staff"))
+    markup.add(InlineKeyboardButton("Новый заказ", callback_data="new_order"))
+
+    return markup
+
+
+def employee_menu_markup():
+    markup = InlineKeyboardMarkup()
+
+    markup.add(InlineKeyboardButton("Новый заказ", callback_data="new_order"))
 
     return markup
 

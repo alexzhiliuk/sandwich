@@ -357,5 +357,4 @@ def confirm_delete_employee(data: telebot.types.CallbackQuery):
     )
 
 
-
 bot.add_custom_filter(IsOwner())
