@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from accounts.models import Owner, Employee
+from accounts.models import Owner, Employee, Point
 
 
 class ProductType(models.Model):
@@ -58,6 +58,7 @@ class Order(models.Model):
                               verbose_name="Владелец")
     employee = models.ForeignKey(Employee, related_name="orders", on_delete=models.SET_NULL, null=True, blank=True,
                                  verbose_name="Сотрудник")
+    point = models.ForeignKey(Point, related_name="orders", on_delete=models.SET_NULL, null=True, verbose_name="Точка")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     pickup = models.BooleanField(default=False, verbose_name="Самовывоз")
 

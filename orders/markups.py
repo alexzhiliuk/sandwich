@@ -19,3 +19,12 @@ def pickup_markup():
     markup.row(KeyboardButton("Самовывоз"))
 
     return markup
+
+
+def order_points_markup(points):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+
+    for point in points:
+        markup.row(KeyboardButton(point.address))
+
+    return markup

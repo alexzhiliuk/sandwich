@@ -6,8 +6,8 @@ def get_owner_by_id(tg_id):
     if owner:
         return owner, None
 
-    employee = Employee.objects.filter(tg_id=tg_id, is_active=True).first()
+    employee = Employee.objects.filter(tg_id=tg_id, is_active=True, owner__is_active=True).first()
     if employee:
         return employee.owner, employee
 
-    return None
+    return None, None
