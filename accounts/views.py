@@ -1,11 +1,16 @@
 import re
 
 import telebot
+from telebot import custom_filters
+
 from .models import *
-from bot.views import bot
 from django.db.utils import IntegrityError
 from .filters import IsOwner
 from .markups import *
+
+from bot.apps import BotConfig
+
+bot = BotConfig.bot
 
 BOT_URL = "t.me/sandwich_order_test_bot"
 

@@ -2,12 +2,15 @@ import re
 
 import telebot
 from .models import *
-from bot.views import bot
 from accounts.filters import IsOwner, IsRegistered
 from accounts.utils import get_owner_by_id
 from .markups import *
 
 from telebot.types import ReplyKeyboardRemove
+
+from bot.apps import BotConfig
+
+bot = BotConfig.bot
 
 
 @bot.callback_query_handler(func=lambda data: re.fullmatch(r"new_order", data.data))

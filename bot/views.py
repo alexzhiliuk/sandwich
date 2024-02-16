@@ -1,20 +1,12 @@
-from django.shortcuts import render
 from django.http import HttpResponse
-from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 
-from accounts.markups import *
-
-import telebot
-
-WEBHOOK = "77ujnh2dls.loclx.io"
-
-bot = telebot.TeleBot(settings.BOT_TOKEN)
-bot.remove_webhook()
-bot.set_webhook(WEBHOOK)
+from bot.apps import BotConfig
 
 from accounts.views import *
 from orders.views import *
+
+bot = BotConfig.bot
 
 
 @csrf_exempt
@@ -29,11 +21,9 @@ def index(request):
 @bot.message_handler(commands=['start'])
 def start(message: telebot.types.Message):
     parameter = message.text.split(" ")[-1]
-
     if parameter.isnumeric():
 
         user_id = message.from_user.id
-
         if Owner.objects.filter(tg_id=user_id).exists() or Employee.objects.filter(tg_id=user_id).exists():
             bot.send_message(user_id, 'Вы уже зарегистрированы в системе!')
             return
@@ -61,3 +51,6 @@ def menu(message: telebot.types.Message):
         bot.send_message(user_id, 'Меню:', reply_markup=employee_menu_markup())
     else:
         bot.send_message(user_id, "Вы не зарегистрированы либо администратор еще не подтвердил вашу регистрацию!")
+
+
+bot.add_custom_filter(custom_filters.StateFilter(bot))
