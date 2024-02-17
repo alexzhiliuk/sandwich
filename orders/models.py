@@ -54,6 +54,12 @@ class SpecialPrice(models.Model):
 
 
 class Order(models.Model):
+
+    class Status(models.TextChoices):
+        CREATED = "CR", "Создан"
+        ACCEPTED = "AC", "Принят"
+        COMPLETED = "CO", "Завершен"
+
     owner = models.ForeignKey(Owner, related_name="orders", on_delete=models.SET_NULL, null=True, blank=True,
                               verbose_name="Владелец")
     employee = models.ForeignKey(Employee, related_name="orders", on_delete=models.SET_NULL, null=True, blank=True,
@@ -61,6 +67,7 @@ class Order(models.Model):
     point = models.ForeignKey(Point, related_name="orders", on_delete=models.SET_NULL, null=True, verbose_name="Точка")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     pickup = models.BooleanField(default=False, verbose_name="Самовывоз")
+    status = models.CharField(max_length=32, default=Status.CREATED, choices=Status.choices, verbose_name="Статус")
 
     def __str__(self):
         if self.owner:

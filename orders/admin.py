@@ -39,7 +39,7 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_filter = ["pickup"]
+    list_filter = ["pickup", "status"]
     list_display = ["owner", "employee", "created_at", "delivery"]
     inlines = [OrderItemInline]
     readonly_fields = ["created_at", "result"]
@@ -65,6 +65,12 @@ class OrderAdmin(admin.ModelAdmin):
         return format_html(''.join(html.format(point=point)))
 
     fieldsets = [
+        (
+            "Статус",
+            {
+                "fields": ["status"],
+            },
+        ),
         (
             "Кто заказал",
             {
