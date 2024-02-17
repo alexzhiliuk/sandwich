@@ -27,4 +27,6 @@ def order_points_markup(points):
     for point in points:
         markup.row(KeyboardButton(point.address))
 
+    markup.row(KeyboardButton("Отмена"))
+
     return markup

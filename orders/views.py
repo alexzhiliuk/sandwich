@@ -1,10 +1,12 @@
 import re
 
 import telebot
-from .models import *
 from accounts.filters import IsOwner, IsRegistered
 from accounts.utils import get_owner_by_id
+
+from .models import *
 from .markups import *
+from .utils import has_order_today
 
 from telebot.types import ReplyKeyboardRemove
 
@@ -19,11 +21,20 @@ def new_order(data: telebot.types.CallbackQuery):
     user_id = data.from_user.id
     owner, employee = get_owner_by_id(user_id)
     if not owner:
+        bot.send_message(data.from_user.id, "Вы не заргеистрированы")
         return
     if employee:
         if not employee.point:
             bot.send_message(data.from_user.id, "Вы не привязаны к точке, обратитесь к вашему руководителя")
             return
+        # Проверяется, был ли сделан уже заказ сегодня
+        if has_order_today(employee=employee):
+            bot.send_message(data.from_user.id, "Сегодня вы уже сделали заказ. Можете его редактировать")
+            return
+
+    if not owner.points.exists():
+        bot.send_message(data.from_user.id, "Вы еще не добавили точки для доставки!")
+        return
 
     products = Product.objects.all().order_by('product_type')
 
@@ -122,6 +133,10 @@ def process_delivery_point(message: telebot.types.Message, **kwargs):
         bot.register_next_step_handler(send, process_delivery_point, **kwargs)
         return
 
+    if message.text == "Отмена":
+        bot.send_message(message.from_user.id, "Заказ отменен", reply_markup=ReplyKeyboardRemove())
+        return
+
     if kwargs.get("pickup") is None:
 
         if message.text not in ["Доставить на точку", "Самовывоз"]:
@@ -143,6 +158,12 @@ def process_delivery_point(message: telebot.types.Message, **kwargs):
             return
 
         if message.text == "Самовывоз":
+            if has_order_today(owner=kwargs["owner"], pickup=True):
+                send = bot.send_message(message.from_user.id,
+                                        "У вас уже есть заказ на самовыоз сегодня",
+                                        reply_markup=pickup_markup())
+                bot.register_next_step_handler(send, process_delivery_point, **kwargs)
+                return
             kwargs.update({"pickup": True})
             completing_order(message, **kwargs)
             return
@@ -151,6 +172,12 @@ def process_delivery_point(message: telebot.types.Message, **kwargs):
     point = Point.objects.filter(address=point_address).first()
     if not point:
         send = bot.send_message(message.from_user.id, "Такой точки нет, выберите из предложенных вариантов:",
+                                reply_markup=order_points_markup(kwargs["owner"].points.all()))
+        bot.register_next_step_handler(send, process_delivery_point, **kwargs)
+        return
+
+    if has_order_today(owner=kwargs["owner"], point=point):
+        send = bot.send_message(message.from_user.id, "У вас уже есть заказ сегодня на эту точку, выберите другую:",
                                 reply_markup=order_points_markup(kwargs["owner"].points.all()))
         bot.register_next_step_handler(send, process_delivery_point, **kwargs)
         return
