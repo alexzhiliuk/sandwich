@@ -1,3 +1,4 @@
+import telebot.apihelper
 from django.db import models
 
 from bot.apps import BotConfig
@@ -26,7 +27,10 @@ class Owner(models.Model):
     def save(self, *args, **kwargs):
         if self.is_active != self.__original_is_active:
             if self.is_active:
-                BotConfig.bot.send_message(self.tg_id, "Регистрация подтверждена!")
+                try:
+                    BotConfig.bot.send_message(self.tg_id, "Регистрация подтверждена!")
+                except telebot.apihelper.ApiTelegramException:
+                    pass
         super().save(*args, **kwargs)
         self.__original_is_active = self.is_active
 
