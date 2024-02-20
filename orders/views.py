@@ -3,6 +3,7 @@ import re
 import telebot
 from accounts.filters import IsOwner, IsRegistered
 from accounts.utils import get_owner_by_id
+from .decorators import order_edit_time
 
 from .models import *
 from .markups import *
@@ -15,6 +16,7 @@ from bot.apps import BotConfig
 bot = BotConfig.bot
 
 
+@bot.message_handler(commands=["new_order"])
 @bot.callback_query_handler(func=lambda data: re.fullmatch(r"new_order", data.data))
 def new_order(data: telebot.types.CallbackQuery):
     # Проверка на регистрацию + определение владельца (нужно для спеццены)
@@ -25,7 +27,7 @@ def new_order(data: telebot.types.CallbackQuery):
         return
     if employee:
         if not employee.point:
-            bot.send_message(data.from_user.id, "Вы не привязаны к точке, обратитесь к вашему руководителя")
+            bot.send_message(data.from_user.id, "Вы не привязаны к точке, обратитесь к вашему руководителю")
             return
         # Проверяется, был ли сделан уже заказ сегодня
         if has_order_today(employee=employee):
@@ -203,6 +205,212 @@ def completing_order(message: telebot.types.Message, **kwargs):
     final_message = (f"Ваш заказ принят!\nИтоговая сумма заказа: {order.get_final_info()[1]} руб."
                      f"\n{'Самовывоз' if order.pickup else f'Достака на точку: {order.point.address}'}"),
     bot.send_message(message.from_user.id, final_message, reply_markup=ReplyKeyboardRemove())
+
+
+@bot.callback_query_handler(func=lambda data: re.fullmatch(r"update_order", data.data))
+@order_edit_time(bot=bot)
+def update_order(data: telebot.types.CallbackQuery):
+    # Проверка на регистрацию
+    user_id = data.from_user.id
+    owner, employee = get_owner_by_id(user_id)
+    if not owner:
+        bot.send_message(data.from_user.id, "Вы не заргеистрированы")
+        return
+    if employee:
+        orders = Order.objects.filter(status=Order.Status.CREATED, employee=employee)
+        # ...
+        return
+
+    orders = Order.objects.filter(status=Order.Status.CREATED, owner=owner).values("id", "created_at")
+    if not orders:
+        bot.send_message(data.from_user.id, "У вас нет заказов, которые можно редактировать")
+        return
+
+    if "меню:" in data.message.text.lower():
+        bot.send_message(data.from_user.id, "Выберите заказ, который хотите редактировать:",
+                         reply_markup=orders_markup(orders))
+    else:
+        bot.edit_message_text("Выберите заказ, который хотите редактировать:", data.from_user.id, data.message.id,
+                              reply_markup=orders_markup(orders))
+
+
+@bot.callback_query_handler(func=lambda data: re.fullmatch(r"update_order_\d+", data.data))
+@order_edit_time(bot=bot)
+def select_product(data: telebot.types.CallbackQuery):
+    # Проверка на регистрацию
+    user_id = data.from_user.id
+    owner, employee = get_owner_by_id(user_id)
+    if not owner:
+        bot.send_message(data.from_user.id, "Вы не заргеистрированы")
+        return
+
+    order_id = int(data.data.split("_")[-1])
+    order = Order.objects.filter(id=order_id).first()
+    if not order:
+        bot.send_message(data.from_user.id, "Такого заказа не существует!")
+        return
+
+    order_info = order.generate_message()
+
+    bot.edit_message_text(order_info, data.from_user.id, data.message.id, parse_mode="HTML",
+                          reply_markup=order_products_markup(order_id))
+
+
+@bot.callback_query_handler(func=lambda data: re.fullmatch(r"update_order_\d+_page_\d+", data.data))
+@order_edit_time(bot=bot)
+def select_product_change_page(data: telebot.types.CallbackQuery):
+    # Проверка на регистрацию
+    user_id = data.from_user.id
+    owner, employee = get_owner_by_id(user_id)
+    if not owner:
+        bot.send_message(data.from_user.id, "Вы не заргеистрированы")
+        return
+
+    order_id = int(data.data.split("_")[2])
+    order = Order.objects.filter(id=order_id).first()
+    if not order:
+        bot.send_message(data.from_user.id, "Такого заказа не существует!")
+        return
+
+    page = int(data.data.split("_")[-1])
+    bot.edit_message_text(data.message.text, data.from_user.id, data.message.id,
+                          reply_markup=order_products_markup(order_id, page))
+
+
+@bot.callback_query_handler(func=lambda data: re.fullmatch(r"update_order_\d+_product_\d+", data.data))
+@order_edit_time(bot=bot)
+def select_product_count(data: telebot.types.CallbackQuery):
+    # Проверка на регистрацию
+    user_id = data.from_user.id
+    owner, employee = get_owner_by_id(user_id)
+    if not owner:
+        bot.send_message(data.from_user.id, "Вы не заргеистрированы")
+        return
+
+    order_id = int(data.data.split("_")[2])
+    order = Order.objects.filter(id=order_id).first()
+    if not order:
+        bot.send_message(data.from_user.id, "Такого заказа не существует!")
+        return
+
+    product_id = int(data.data.split("_")[-1])
+    product = Product.objects.filter(id=product_id).first()
+    if not product:
+        bot.send_message(data.from_user.id, "Такого продукта не существует!")
+        return
+
+    bot.edit_message_text(product.generate_message(owner), data.from_user.id, data.message.id,
+                          reply_markup=order_products_count_markup(order_id, product_id),
+                          parse_mode="HTML")
+
+
+@bot.callback_query_handler(func=lambda data: re.fullmatch(r"update_order_\d+_product_\d+_count_\d+", data.data))
+@order_edit_time(bot=bot)
+def update_order_product(data: telebot.types.CallbackQuery):
+    # Проверка на регистрацию
+    user_id = data.from_user.id
+    owner, employee = get_owner_by_id(user_id)
+    if not owner:
+        bot.send_message(data.from_user.id, "Вы не заргеистрированы")
+        return
+
+    order_id = int(data.data.split("_")[2])
+    order = Order.objects.filter(id=order_id).first()
+    if not order:
+        bot.send_message(data.from_user.id, "Такого заказа не существует!")
+        return
+
+    product_id = int(data.data.split("_")[4])
+    product = Product.objects.filter(id=product_id).first()
+    if not product:
+        bot.send_message(data.from_user.id, "Такого продукта не существует!")
+        return
+
+    count = int(data.data.split("_")[-1])
+    order.update_item(product, count)
+
+    order_info = order.generate_message()
+
+    bot.edit_message_text(order_info, data.from_user.id, data.message.id,
+                          reply_markup=order_products_markup(order_id),
+                          parse_mode="HTML")
+
+
+@bot.callback_query_handler(func=lambda data: re.fullmatch(r"update_order_\d+_product_\d+_count", data.data))
+@order_edit_time(bot=bot)
+def get_new_product_count(data: telebot.types.CallbackQuery):
+    # Проверка на регистрацию
+    user_id = data.from_user.id
+    owner, employee = get_owner_by_id(user_id)
+    if not owner:
+        bot.send_message(data.from_user.id, "Вы не заргеистрированы")
+        return
+
+    order_id = int(data.data.split("_")[2])
+    order = Order.objects.filter(id=order_id).first()
+    if not order:
+        bot.send_message(data.from_user.id, "Такого заказа не существует!")
+        return
+
+    product_id = int(data.data.split("_")[4])
+    product = Product.objects.filter(id=product_id).first()
+    if not product:
+        bot.send_message(data.from_user.id, "Такого продукта не существует!")
+        return
+
+    send = bot.send_message(data.from_user.id, "Введите количество:")
+    bot.register_next_step_handler(send, process_new_product_count, order, product, data.message.id)
+
+
+def process_new_product_count(message: telebot.types.Message, order, product, message_id):
+    if message.content_type != "text":
+        send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
+        bot.register_next_step_handler(send, process_new_product_count, order, product)
+        return
+
+    if not message.text.isnumeric():
+        send = bot.send_message(message.from_user.id, "Сообщение должно содержать только цифры!")
+        bot.register_next_step_handler(send, process_new_product_count, order, product)
+        return
+
+    count = int(message.text)
+    order.update_item(product, count)
+
+    order_info = order.generate_message()
+
+    bot.edit_message_text(order_info, message.from_user.id, message_id,
+                          reply_markup=order_products_markup(order.id),
+                          parse_mode="HTML")
+
+
+@bot.callback_query_handler(func=lambda data: re.fullmatch(r"update_order_\d+_product_\d+_delete", data.data))
+@order_edit_time(bot=bot)
+def delete_order_product(data: telebot.types.CallbackQuery):
+    # Проверка на регистрацию
+    user_id = data.from_user.id
+    owner, employee = get_owner_by_id(user_id)
+    if not owner:
+        bot.send_message(data.from_user.id, "Вы не заргеистрированы")
+        return
+
+    order_id = int(data.data.split("_")[2])
+    order = Order.objects.filter(id=order_id).first()
+    if not order:
+        bot.send_message(data.from_user.id, "Такого заказа не существует!")
+        return
+
+    product_id = int(data.data.split("_")[4])
+    product = Product.objects.filter(id=product_id).first()
+    if not product:
+        bot.send_message(data.from_user.id, "Такого продукта не существует!")
+        return
+
+    order.delete_item(product)
+
+    order_info = order.generate_message()
+
+    bot.edit_message_text(order_info, data.from_user.id, data.message.id, parse_mode="HTML",
+                          reply_markup=order_products_markup(order_id))
 
 
 bot.add_custom_filter(IsOwner())

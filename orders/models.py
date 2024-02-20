@@ -95,6 +95,42 @@ class Order(models.Model):
         for product, count in ordered_items.items():
             OrderItem.objects.create(order=self, product=product, count=count)
 
+    def update_item(self, product, count):
+        item = self.items.filter(product=product).first()
+        if item:
+            item.count = count
+            item.save()
+        else:
+            OrderItem.objects.create(order=self, product=product, count=count)
+
+    def delete_item(self, product):
+        item = self.items.filter(product=product).first()
+        if item:
+            item.delete()
+
+    def get_details(self):
+        details = ""
+        total_count = 0
+        total_price = 0
+        for item in self.items.all():
+            item_price = item.price
+            item_count = item.count
+            total_price += item_price
+            total_count += item_count
+            details += f"{item.product.name} {item_count} шт. {item_price} руб.\n"
+        details += f"-----\nВсего товаров: {total_count} шт.\nИтоговая сумма: {total_price} руб."
+        return details
+
+    def generate_message(self):
+        if self.pickup:
+            order_delivery = "Самовывоз"
+        else:
+            order_delivery = self.point.address
+        message = f"Заказ:\n<i>{self.created_at.date().strftime('%Y-%m-%d')}</i>\n<b>{order_delivery}</b>\n-----\n"
+        message += self.get_details()
+
+        return message
+
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name="items", on_delete=models.CASCADE, verbose_name="Заказ")
