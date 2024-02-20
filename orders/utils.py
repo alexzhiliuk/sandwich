@@ -13,7 +13,9 @@ def has_order_today(employee=None, owner=None, point=None, pickup=False):
         return False
 
     if owner:
-        last_order = Order.objects.filter(owner=owner, point=point, pickup=pickup).order_by("-created_at").first()
+        last_order = Order.objects.filter(
+            owner=owner, employee=None, point=point, pickup=pickup
+        ).order_by("-created_at").first()
         if not last_order:
             return False
         if date.today() == last_order.created_at.date():

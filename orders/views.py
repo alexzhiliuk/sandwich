@@ -191,9 +191,9 @@ def process_delivery_point(message: telebot.types.Message, **kwargs):
 def completing_order(message: telebot.types.Message, **kwargs):
     if kwargs["employee"]:
         if kwargs.get("pickup"):
-            order = Order.objects.create(employee=kwargs["employee"], pickup=True)
+            order = Order.objects.create(owner=kwargs["owner"], employee=kwargs["employee"], pickup=True)
         else:
-            order = Order.objects.create(employee=kwargs["employee"], point=kwargs["point"])
+            order = Order.objects.create(owner=kwargs["owner"], employee=kwargs["employee"], point=kwargs["point"])
     else:
         if kwargs.get("pickup"):
             order = Order.objects.create(owner=kwargs["owner"], pickup=True)
@@ -221,7 +221,7 @@ def update_order(data: telebot.types.CallbackQuery):
         # ...
         return
 
-    orders = Order.objects.filter(status=Order.Status.CREATED, owner=owner).values("id", "created_at")
+    orders = Order.objects.filter(status=Order.Status.CREATED, owner=owner, employee=None).values("id", "created_at")
     if not orders:
         bot.send_message(data.from_user.id, "У вас нет заказов, которые можно редактировать")
         return

@@ -60,8 +60,7 @@ class Order(models.Model):
         ACCEPTED = "AC", "Принят"
         COMPLETED = "CO", "Завершен"
 
-    owner = models.ForeignKey(Owner, related_name="orders", on_delete=models.SET_NULL, null=True, blank=True,
-                              verbose_name="Владелец")
+    owner = models.ForeignKey(Owner, related_name="orders", on_delete=models.CASCADE, verbose_name="Владелец")
     employee = models.ForeignKey(Employee, related_name="orders", on_delete=models.SET_NULL, null=True, blank=True,
                                  verbose_name="Сотрудник")
     point = models.ForeignKey(Point, related_name="orders", on_delete=models.SET_NULL, null=True, verbose_name="Точка")
@@ -70,9 +69,9 @@ class Order(models.Model):
     status = models.CharField(max_length=32, default=Status.CREATED, choices=Status.choices, verbose_name="Статус")
 
     def __str__(self):
-        if self.owner:
-            return f"{self.owner}: {self.created_at}"
-        return f"{self.employee}: {self.created_at}"
+        if self.employee:
+            return f"{self.employee}: {self.created_at}"
+        return f"{self.owner}: {self.created_at}"
 
     class Meta:
         verbose_name = "Заказ"
@@ -80,8 +79,9 @@ class Order(models.Model):
 
     def clean(self):
         super().clean()
-        if self.owner and self.employee or not self.owner and not self.owner:
-            raise ValidationError('Обязательно должен существовать сотрудник либо владелец, но не одновременно')
+        if self.employee:
+            if self.employee.owner != self.owner:
+                raise ValidationError('Сотрудник не принадлежит к данному владельцу!')
 
     def get_final_info(self):
         count = 0
@@ -146,7 +146,7 @@ class OrderItem(models.Model):
         unique_together = [["order", "product"]]
 
     def get_special_price_for_product(self):
-        owner = self.order.owner or self.order.employee.owner
+        owner = self.order.owner
         return self.product.get_special_price_for_user(owner)
 
     @property
