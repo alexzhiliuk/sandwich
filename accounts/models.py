@@ -1,5 +1,7 @@
 from django.db import models
 
+from bot.apps import BotConfig
+
 
 class Owner(models.Model):
 
@@ -12,8 +14,21 @@ class Owner(models.Model):
     is_active = models.BooleanField(default=False, verbose_name="Подтвердить регистрацию")
     pickup = models.BooleanField(default=False, verbose_name="Разрешить самовывоз")
 
+    __original_is_active = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_is_active = self.is_active
+
     def __str__(self):
         return f"{self.unp} {self.fio}"
+
+    def save(self, *args, **kwargs):
+        if self.is_active != self.__original_is_active:
+            if self.is_active:
+                BotConfig.bot.send_message(self.tg_id, "Регистрация подтверждена!")
+        super().save(*args, **kwargs)
+        self.__original_is_active = self.is_active
 
     class Meta:
         verbose_name = "Владелец"
