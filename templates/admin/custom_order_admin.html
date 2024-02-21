@@ -1,0 +1,14 @@
+{% extends 'admin/change_list.html' %}
+{% load order_tags %}
+
+{% block object-tools %}
+    {% access_to_close_acceptance as acceptance %}
+    {% get_order_acceptance as order_acceptance %}
+    {% if acceptance %}
+        <form action="{% url 'close-acceptance' %}" method="post">
+            {% csrf_token %}
+            <input type="submit" value="Закрыть принятие заявок">
+            <p>Статус приема заявок: {{ order_acceptance }}</p>
+        </form>
+    {% endif %}
+{% endblock %}

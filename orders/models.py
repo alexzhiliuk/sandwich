@@ -83,6 +83,11 @@ class Order(models.Model):
             if self.employee.owner != self.owner:
                 raise ValidationError('Сотрудник не принадлежит к данному владельцу!')
 
+    @classmethod
+    def accept_created(cls):
+        orders = cls.objects.filter(status=cls.Status.CREATED)
+        orders.update(status=cls.Status.ACCEPTED)
+
     def get_final_info(self):
         count = 0
         price = 0
@@ -157,3 +162,19 @@ class OrderItem(models.Model):
             return round(special_price.price * self.count, 2)
 
         return round(self.product.price * self.count, 2)
+
+
+class OrderAcceptance(models.Model):
+
+    class Status(models.TextChoices):
+        OPEN = "OP", "Открыт"
+        CLOSE = "CL", "Закрыт"
+
+    status = models.CharField(max_length=16, default=Status.OPEN, choices=Status.choices, verbose_name="Статус")
+
+    def __str__(self):
+        return self.get_status_display()
+
+    class Meta:
+        verbose_name = "Прием заказов"
+        verbose_name_plural = "Прием заказов"

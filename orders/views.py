@@ -1,9 +1,13 @@
 import re
 
 import telebot
+from django.contrib import messages
+from django.http import HttpResponse
+from django.shortcuts import redirect
+
 from accounts.filters import IsOwner, IsRegistered
 from accounts.utils import get_owner_by_id
-from .decorators import order_edit_time
+from .decorators import order_edit_time, order_acceptance
 
 from .models import *
 from .markups import *
@@ -16,8 +20,16 @@ from bot.apps import BotConfig
 bot = BotConfig.bot
 
 
+def close_acceptance(request):
+    OrderAcceptance.objects.update(status=OrderAcceptance.Status.CLOSE)
+    Order.accept_created()
+    messages.success(request, "Прием заявок закрыт!")
+    return redirect(request.META.get("HTTP_REFERER"))
+
+
 @bot.message_handler(commands=["new_order"])
 @bot.callback_query_handler(func=lambda data: re.fullmatch(r"new_order", data.data))
+@order_acceptance(bot=bot)
 def new_order(data: telebot.types.CallbackQuery):
     # Проверка на регистрацию + определение владельца (нужно для спеццены)
     user_id = data.from_user.id
@@ -188,6 +200,7 @@ def process_delivery_point(message: telebot.types.Message, **kwargs):
     completing_order(message, **kwargs)
 
 
+@order_acceptance(bot=bot)
 def completing_order(message: telebot.types.Message, **kwargs):
     if kwargs["employee"]:
         if kwargs.get("pickup"):
