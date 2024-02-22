@@ -19,7 +19,7 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(SpecialPrice)
 class SpecialPriceAdmin(admin.ModelAdmin):
-    search_fields = ["owner", "product"]
+    search_fields = ["owner__unp", "owner__fio", "product__name"]
     list_filter = ["owner", "product"]
     autocomplete_fields = ["owner", "product"]
     list_display = ["product", "price", "owner"]
@@ -41,6 +41,7 @@ class OrderItemInline(admin.TabularInline):
 class OrderAdmin(admin.ModelAdmin):
     list_filter = ["pickup", "status"]
     list_display = ["owner", "employee", "created_at", "delivery", "status"]
+    autocomplete_fields = ["owner", "point"]
     inlines = [OrderItemInline]
     readonly_fields = ["created_at", "result"]
     list_display_links = ["owner", "employee"]

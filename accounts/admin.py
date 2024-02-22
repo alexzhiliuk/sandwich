@@ -37,14 +37,14 @@ class OwnerAdmin(admin.ModelAdmin):
 
 @admin.register(Point)
 class PointAdmin(admin.ModelAdmin):
-    search_fields = ["owner", "address"]
+    search_fields = ["owner__unp", "owner__fio", "address"]
     autocomplete_fields = ["owner"]
 
 
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
     readonly_fields = ["created_at", "tg_id"]
-    search_fields = ["owner", "fio", "phone"]
+    search_fields = ["owner__unp", "owner__fio", "fio", "phone"]
     autocomplete_fields = ["owner", "point"]
     list_filter = ["is_active"]
     fieldsets = [

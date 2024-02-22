@@ -82,6 +82,11 @@ class Order(models.Model):
         if self.employee:
             if self.employee.owner != self.owner:
                 raise ValidationError('Сотрудник не принадлежит к данному владельцу!')
+        if self.pickup and self.point or not self.pickup and not self.point:
+            raise ValidationError('У заказа должна быть либо точка, либо самовывоз!')
+        if self.point:
+            if self.point.owner != self.owner:
+                raise ValidationError('Точка должна принадлежать владельцу!')
 
     @classmethod
     def accept_created(cls):
