@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'bot.apps.BotConfig',
     'accounts.apps.AccountsConfig',
     'orders.apps.OrdersConfig',
+    'mailing.apps.MailingConfig',
 ]
 
 MIDDLEWARE = [

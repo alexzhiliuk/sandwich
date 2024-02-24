@@ -1,3 +1,8 @@
 from django.contrib import admin
 
-# Register your models here.
+from mailing.models import Mailing
+
+
+@admin.register(Mailing)
+class OwnerAdmin(admin.ModelAdmin):
+    pass
