@@ -11,4 +11,8 @@
             <p>Статус приема заявок: {{ order_acceptance }}</p>
         </form>
     {% endif %}
+    <form action="{% url 'daily-report' %}" method="post">
+        {% csrf_token %}
+        <input type="submit" value="Скачать дневной отчет в EXCEL">
+    </form>
 {% endblock %}

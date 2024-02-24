@@ -1,13 +1,16 @@
 import re
+from tempfile import NamedTemporaryFile
 
 import telebot
+from django.conf import settings
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, FileResponse
 from django.shortcuts import redirect
 
 from accounts.filters import IsOwner, IsRegistered
 from accounts.utils import get_owner_by_id
 from .decorators import order_edit_time, order_acceptance
+from .excel import ExcelDailyReport
 
 from .models import *
 from .markups import *
@@ -25,6 +28,19 @@ def close_acceptance(request):
     Order.accept_created()
     messages.success(request, "Прием заявок закрыт!")
     return redirect(request.META.get("HTTP_REFERER"))
+
+
+def daily_report(request):
+    report = ExcelDailyReport(settings.BASE_DIR / "excel_templates/daily_report.xlsx")
+
+    with NamedTemporaryFile() as tmp:
+        report.wb.save(tmp.name)
+        tmp.seek(0)
+        stream = tmp.read()
+
+    response = HttpResponse(content=stream, content_type='application/ms-excel', )
+    response['Content-Disposition'] = f'attachment; filename=report.xlsx'
+    return response
 
 
 @bot.message_handler(commands=["new_order"])

@@ -16,6 +16,21 @@ class ProductAdmin(admin.ModelAdmin):
     autocomplete_fields = ["product_type"]
     list_display = ["name", "price", "product_type"]
 
+    fieldsets = [
+        (
+            "Информация",
+            {
+                "fields": ["product_type", "name", "price"],
+            },
+        ),
+        (
+            "Excel",
+            {
+                "fields": ["excel_name", "excel_code"],
+            },
+        )
+    ]
+
 
 @admin.register(SpecialPrice)
 class SpecialPriceAdmin(admin.ModelAdmin):
