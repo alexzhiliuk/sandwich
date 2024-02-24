@@ -1,3 +1,5 @@
+from datetime import date
+
 import telebot.apihelper
 from django.db import models
 
