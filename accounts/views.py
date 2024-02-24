@@ -89,17 +89,29 @@ def adding_point(data: telebot.types.CallbackQuery):
 def process_point_address(message: telebot.types.Message, message_id):
     if message.content_type != "text":
         send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
-        bot.register_next_step_handler(send, process_point_address)
+        bot.register_next_step_handler(send, process_point_address, message_id)
+        return
+
+    address = message.text
+    send = bot.send_message(message.from_user.id, "Введите время работы точки")
+    bot.register_next_step_handler(send, process_point_working_hours, message_id, address)
+
+
+def process_point_working_hours(message: telebot.types.Message, message_id, address):
+    if message.content_type != "text":
+        send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
+        bot.register_next_step_handler(send, process_point_working_hours, message_id, address)
         return
 
     user_id = message.chat.id
     Point.objects.create(
         owner=Owner.objects.get(tg_id=user_id),
-        address=message.text
+        address=address,
+        working_hours=message.text
     )
     bot.edit_message_text("Ваши точки:", message.from_user.id, message_id, reply_markup=points_markup(
         Owner.objects.get(tg_id=user_id).points.all().values("id", "address")))
-    bot.send_message(user_id, f"Точка с адресом <b>{message.text}</b> добавлена!", parse_mode="HTML")
+    bot.send_message(user_id, f"Точка с адресом <b>{address}</b> добавлена!", parse_mode="HTML")
 
 
 @bot.callback_query_handler(is_owner=True, func=lambda data: re.fullmatch(r"points", data.data))
@@ -146,17 +158,30 @@ def edit_point(data: telebot.types.CallbackQuery):
         return
 
     send = bot.send_message(data.from_user.id, "Введите новый адрес точки:")
-    bot.register_next_step_handler(send, process_editing_point, data.message.id, point)
+    bot.register_next_step_handler(send, process_editing_point_address, data.message.id, point)
 
 
-def process_editing_point(message: telebot.types.Message, message_id, point):
+def process_editing_point_address(message: telebot.types.Message, message_id, point):
     if message.content_type != "text":
         send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
-        bot.register_next_step_handler(send, process_editing_point, message_id, point)
+        bot.register_next_step_handler(send, process_editing_point_address, message_id, point)
         return
 
     new_address = message.text
+
+    send = bot.send_message(message.from_user.id, "Введите новое время работы:")
+    bot.register_next_step_handler(send, process_editing_point_working_hours, message_id, point, new_address)
+
+
+def process_editing_point_working_hours(message: telebot.types.Message, message_id, point, new_address):
+    if message.content_type != "text":
+        send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
+        bot.register_next_step_handler(send, process_editing_point_working_hours, message_id, point, new_address)
+        return
+
+    new_working_hours = message.text
     point.address = new_address
+    point.working_hours = new_working_hours
     point.save()
 
     bot.edit_message_text(new_address, message.from_user.id, message_id, reply_markup=point_markup(point))
