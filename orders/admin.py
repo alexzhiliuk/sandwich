@@ -40,6 +40,12 @@ class SpecialPriceAdmin(admin.ModelAdmin):
     list_display = ["product", "price", "owner"]
 
 
+class SpecialPriceInline(admin.TabularInline):
+    model = SpecialPrice
+    extra = 0
+    autocomplete_fields = ["product"]
+
+
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0

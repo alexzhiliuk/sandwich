@@ -54,6 +54,7 @@ class SpecialPrice(models.Model):
     class Meta:
         verbose_name = "Специальная цена"
         verbose_name_plural = "Специальные цены"
+        unique_together = [["owner", "product"]]
 
 
 class Order(models.Model):

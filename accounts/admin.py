@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import *
+from orders.admin import SpecialPriceInline
 
 
 @admin.register(Owner)
@@ -7,6 +8,7 @@ class OwnerAdmin(admin.ModelAdmin):
     readonly_fields = ["created_at", "tg_id"]
     search_fields = ["unp", "fio", "phone"]
     list_filter = ["is_active"]
+    inlines = [SpecialPriceInline]
     fieldsets = [
         (
             "Персональная информация",
