@@ -11,7 +11,7 @@ class Owner(models.Model):
     tg_id = models.CharField(max_length=64, unique=True, verbose_name="ID в Telegram")
     phone = models.CharField(max_length=32, unique=True, verbose_name="Номер телефона")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата регистрации")
-    has_notifications = models.BooleanField(default=True, verbose_name="Включить ведомления")
+    has_notifications = models.BooleanField(default=True, verbose_name="Включить уведомления")
     is_active = models.BooleanField(default=False, verbose_name="Подтвердить регистрацию")
     pickup = models.BooleanField(default=False, verbose_name="Разрешить самовывоз")
 
@@ -60,7 +60,7 @@ class Employee(models.Model):
     tg_id = models.CharField(max_length=64, unique=True, verbose_name="ID в Telegram")
     phone = models.CharField(max_length=32, unique=True, verbose_name="Номер телефона")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата регистрации")
-    has_notifications = models.BooleanField(default=True, verbose_name="Уведомления")
+    has_notifications = models.BooleanField(default=True, verbose_name="Включить уведомления")
     is_active = models.BooleanField(default=False, verbose_name="Активный")
 
     def __str__(self):
