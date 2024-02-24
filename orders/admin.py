@@ -77,15 +77,17 @@ class OrderAdmin(admin.ModelAdmin):
     @admin.display(description='Доставка')
     def delivery(self, obj):
         if obj.pickup:
-            point = "Самовывоз"
-        else:
-            try:
-                point = obj.point.address
-            except AttributeError:
-                point = "Не указано (точка была удалена)"
+            html = '<span>Самовывоз</span>'
+            return format_html(''.join(html))
 
-        html = '<span>{point}</span>'
-        return format_html(''.join(html.format(point=point)))
+        try:
+            point = obj.point
+        except AttributeError:
+            html = '<span>Не указано (точка была удалена)</span>'
+            return format_html(''.join(html))
+
+        html = '<span>{address}</span><br><span>Время работы: {working}</span>'
+        return format_html(''.join(html.format(address=point.address, working=point.working_hours or '')))
 
     fieldsets = [
         (

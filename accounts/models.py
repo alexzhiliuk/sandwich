@@ -45,6 +45,7 @@ class Point(models.Model):
 
     owner = models.ForeignKey(Owner, related_name="points", on_delete=models.PROTECT, verbose_name="Владелец")
     address = models.CharField(max_length=256, unique=True, verbose_name="Адрес")
+    working_hours = models.CharField(max_length=64, blank=True, null=True, verbose_name="Время работы")
 
     def __str__(self):
         return f"{self.address} {self.owner}"

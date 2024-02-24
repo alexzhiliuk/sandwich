@@ -41,6 +41,7 @@ class OwnerAdmin(admin.ModelAdmin):
 class PointAdmin(admin.ModelAdmin):
     search_fields = ["owner__unp", "owner__fio", "address"]
     autocomplete_fields = ["owner"]
+    list_filter = ["owner"]
 
 
 @admin.register(Employee)
