@@ -1,3 +1,5 @@
+from datetime import datetime as dt
+
 from functools import wraps
 
 from telebot.types import CallbackQuery
@@ -11,7 +13,16 @@ def order_edit_time(bot: TeleBot):
     def decorator(function):
         @wraps(function)
         def wrap(data: CallbackQuery, *args, **kwargs):
-            if time_access(16, 45):
+            weekday = dt.now().weekday()
+            if weekday in [0, 1, 2, 3]:
+                access = time_access(16, 45)
+            elif weekday == 6:
+                access = time_access(14, 0)
+            else:
+                # в пт-сб редактировать можно в любое время
+                access = True
+
+            if access:
                 return function(data, *args, **kwargs)
             else:
                 bot.send_message(data.from_user.id, "Уже слишком поздно")
