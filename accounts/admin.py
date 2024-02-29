@@ -42,6 +42,7 @@ class PointAdmin(admin.ModelAdmin):
     search_fields = ["owner__unp", "owner__fio", "address"]
     autocomplete_fields = ["owner"]
     list_filter = ["owner"]
+    change_form_template = "admin/custom_point_admin.html"
 
 
 @admin.register(Employee)

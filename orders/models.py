@@ -101,7 +101,7 @@ class Order(models.Model):
         count = 0
         price = 0
         for item in self.items.all():
-            count += 1
+            count += item.count
             price += item.price
         return count, price
 
