@@ -5,7 +5,7 @@ from orders.admin import SpecialPriceInline
 
 @admin.register(Owner)
 class OwnerAdmin(admin.ModelAdmin):
-    readonly_fields = ["created_at", "tg_id"]
+    readonly_fields = ["created_at"]
     search_fields = ["unp", "fio", "phone"]
     list_filter = ["is_active"]
     inlines = [SpecialPriceInline]

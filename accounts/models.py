@@ -10,7 +10,7 @@ class Owner(models.Model):
 
     unp = models.CharField(max_length=32, unique=True, db_index=True, verbose_name="УНП")
     fio = models.CharField(max_length=256, unique=True, verbose_name="ФИО")
-    tg_id = models.CharField(max_length=64, unique=True, verbose_name="ID в Telegram")
+    tg_id = models.CharField(max_length=64, unique=True, null=True, blank=True, verbose_name="ID в Telegram")
     phone = models.CharField(max_length=32, unique=True, verbose_name="Номер телефона")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата регистрации")
     has_notifications = models.BooleanField(default=True, verbose_name="Включить уведомления")
