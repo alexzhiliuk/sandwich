@@ -6,9 +6,11 @@ from django.conf import settings
 class BotConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'bot'
-
-    webhook = "etrnfkuh4m.loclx.io"
+    webhook = "tgr835hvdf.loclx.io"
     bot = telebot.TeleBot(settings.BOT_TOKEN)
-    bot.remove_webhook()
-    bot.set_webhook(webhook)
+
+    def ready(self):
+
+        self.bot.remove_webhook()
+        self.bot.set_webhook(self.webhook)
 
