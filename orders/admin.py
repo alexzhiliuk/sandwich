@@ -67,6 +67,17 @@ class OrderAdmin(admin.ModelAdmin):
     readonly_fields = ["created_at", "result"]
     list_display_links = ["owner", "employee"]
     change_list_template = "admin/custom_order_admin.html"
+    actions = ["make_completed"]
+
+    @admin.action(description="Отметить как завершеные")
+    def make_completed(self, request, queryset):
+        queryset.update(status=Order.Status.COMPLETED)
+
+        self.message_user(
+            request,
+            "Выбранные заказы успешно отмечены как завершенные",
+            messages.SUCCESS,
+        )
 
     @admin.display(description='Итог')
     def result(self, obj):
