@@ -1,0 +1,73 @@
+{% extends 'admin/change_form.html' %}
+{% load i18n admin_urls %}
+{% load accounts_tags %}
+
+{% block after_related_objects %}
+    <form action="." method="get">
+        <input type="date" id="startPeriodDate" name="start_date" required>
+        <input type="date" id="endPeriodDate" name="end_date" required>
+        <input type="submit" id="selectPeriodSubmit" value="Выбрать период">
+    </form>
+    <button type="submit" id="toggleStats" style="display: flex; padding: 16px; border-radius: 8px; border: none; background: #212121; color: white; cursor: pointer;">
+        Показать/скрыть статистику
+    </button>
+
+    <div class="stats">
+        <div id="month-stats" style="width: 900px; height: 500px"></div>
+    </div>
+
+    {% if request.GET.start_date and request.GET.end_date %}
+        {% get_stats_for_owner point=original start_date=request.GET.start_date end_date=request.GET.end_date as month_stats %}
+    {% else %}
+        {% get_stats_for_owner point=original as month_stats %}
+    {% endif %}
+    <h2>{{ month }}</h2>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script>
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+
+        function drawChart() {
+            var dataTable = new google.visualization.DataTable()
+            dataTable.addColumn('string', 'День');
+            dataTable.addColumn('number', 'Количество продукции');
+            // A column for custom tooltip content
+            dataTable.addColumn({type: 'string', role: 'tooltip'});
+
+            dataTable.addRows([
+              {% for day, info in month_stats.0.items %}
+              ['{{ day }}',  {{ info.0 }}, '{% if info.1 %}{% translate info.1 %}{% else %}0{% endif %}'],
+              {% endfor %}
+            ]);
+
+            var options = {
+              tooltip: {isHtml: true},
+              title: 'Статистика заказов за {% translate month_stats.1.0 %} - {% translate month_stats.1.1 %}',
+              curveType: 'function',
+              legend: { position: 'bottom' }
+            };
+
+            var chart = new google.visualization.LineChart(document.getElementById('month-stats'));
+
+            chart.draw(dataTable, options);
+        }
+
+    </script>
+    <script>
+        $("#toggleStats").click(function(e){
+            e.preventDefault()
+            $(".stats").toggleClass("hidden")
+        })
+        $("#selectPeriodSubmit").click(function(e){
+            e.preventDefault()
+            let startDate = $("#startPeriodDate").val()
+            let endDate = $("#endPeriodDate").val()
+            if (startDate && endDate) {
+                location.search = `?start_date=${startDate}&end_date=${endDate}`
+            }
+            console.log(startDate, endDate)
+        })
+    </script>
+{% endblock %}
