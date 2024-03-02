@@ -9,6 +9,7 @@ class OwnerAdmin(admin.ModelAdmin):
     search_fields = ["unp", "fio", "phone"]
     list_filter = ["is_active"]
     inlines = [SpecialPriceInline]
+    change_list_template = "admin/custom_users_admin.html"
     fieldsets = [
         (
             "Персональная информация",

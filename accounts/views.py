@@ -1,12 +1,15 @@
 import re
 
 import telebot
+from django.contrib import messages
+from django.shortcuts import redirect
 from telebot import custom_filters
 
 from .models import *
 from django.db.utils import IntegrityError
 from .filters import IsOwner
 from .markups import *
+from .excel import ExcelRegistrateUsers
 
 from bot.apps import BotConfig
 from bot.decorators import cancel
@@ -14,6 +17,16 @@ from bot.decorators import cancel
 bot = BotConfig.bot
 
 BOT_URL = "t.me/sandwich_order_test_bot"
+
+
+def add_users_from_excel(request):
+    if request.POST:
+        file = request.FILES.get("users")
+        users = ExcelRegistrateUsers(file)
+        users.register()
+        messages.success(request, "Новые пользователи созданы!")
+
+    return redirect(request.META.get("HTTP_REFERER"))
 
 
 @bot.message_handler(commands=['reg'])
