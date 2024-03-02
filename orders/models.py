@@ -172,6 +172,26 @@ class OrderItem(models.Model):
 
         return round(self.product.price * self.count, 2)
 
+    @classmethod
+    def get_stats(cls):
+        items = cls.objects.filter(order__status=Order.Status.CREATED).select_related("order", "product")
+        stats = {
+            "total_count": 0,
+            "total_price": 0,
+            "average_price": 0,
+            "products": {product: 0 for product in Product.objects.values_list("name", flat=True)}
+        }
+        for item in items:
+            count = item.count
+            price = item.price
+            stats["products"][item.product.name] += count
+            stats["total_count"] += count
+            stats["total_price"] += price
+
+        stats["average_price"] = round(stats["total_price"] / stats["total_count"], 2)
+
+        return stats
+
 
 class OrderAcceptance(models.Model):
 

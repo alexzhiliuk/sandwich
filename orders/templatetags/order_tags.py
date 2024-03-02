@@ -2,7 +2,7 @@ from datetime import datetime as dt
 
 from django import template
 
-from orders.models import OrderAcceptance
+from orders.models import OrderAcceptance, OrderItem
 from orders.utils import time_access
 
 register = template.Library()
@@ -23,3 +23,8 @@ def access_to_close_acceptance(**kwargs):
 @register.simple_tag
 def get_order_acceptance(**kwargs):
     return OrderAcceptance.objects.first().get_status_display()
+
+
+@register.simple_tag
+def get_created_orders_stats():
+    return OrderItem.get_stats()

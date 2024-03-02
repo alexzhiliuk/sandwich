@@ -2,6 +2,37 @@
 {% load order_tags %}
 
 {% block object-tools %}
+    {% get_created_orders_stats as stats %}
+    <style>
+        .stats-table thead th {
+            white-space: nowrap;
+        }
+    </style>
+    <div style="width: 100%; overflow: scroll; margin-bottom: 20px;">
+        <table class="stats-table" style="min-width: 100%">
+            <thead>
+                <tr>
+                    <th>Всего позиций</th>
+                    <th>Средняя цена</th>
+                    {% for product in stats.products.keys %}
+                    <th>{{ product }}</th>
+                    {% endfor %}
+                    <th>Общая сумма</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ stats.total_count }}</td>
+                    <td>{{ stats.average_price }}</td>
+                    {% for product in stats.products.values %}
+                    <td>{{ product }}</td>
+                    {% endfor %}
+                    <td>{{ stats.total_price }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
     {% access_to_close_acceptance as acceptance %}
     {% get_order_acceptance as order_acceptance %}
     {% if acceptance %}
