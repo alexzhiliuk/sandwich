@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-_kprlq-*au-^!l=75vx_!r_1n)6i&q**e@e5pkwj15xhdjb(k*'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", True)
 
 ALLOWED_HOSTS = ['*']
 
@@ -130,4 +130,4 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "6734680296:AAGIYNPcYGlVBKI0tMq8__6SFshRfW2O9_w")
+BOT_TOKEN = os.getenv("BOT_TOKEN", None)
