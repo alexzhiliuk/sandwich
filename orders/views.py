@@ -31,7 +31,7 @@ def close_acceptance(request):
 
 
 def daily_report(request):
-    report = ExcelDailyReport(settings.BASE_DIR / "excel_templates/daily_report.xlsx")
+    report = ExcelDailyReport(settings.BASE_DIR / "orders/excel_templates/daily_report.xlsx")
 
     with NamedTemporaryFile() as tmp:
         report.wb.save(tmp.name)
