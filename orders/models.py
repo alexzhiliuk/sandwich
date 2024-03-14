@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -181,7 +183,7 @@ class OrderItem(models.Model):
 
     @classmethod
     def get_stats(cls):
-        items = cls.objects.filter(order__status=Order.Status.CREATED).select_related("order", "product")
+        items = cls.objects.filter(order__created_at__date=date.today()).select_related("order", "product")
         stats = {
             "total_count": 0,
             "total_price": 0,
