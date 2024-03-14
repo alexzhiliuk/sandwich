@@ -53,6 +53,8 @@ def new_order(data: telebot.types.CallbackQuery):
     if not owner:
         bot.send_message(data.from_user.id, "Вы не заргеистрированы")
         return
+
+    order = Order(owner=owner)
     if employee:
         if not employee.point:
             bot.send_message(data.from_user.id, "Вы не привязаны к точке, обратитесь к вашему руководителю")
@@ -66,21 +68,97 @@ def new_order(data: telebot.types.CallbackQuery):
         bot.send_message(data.from_user.id, "Вы еще не добавили точки для доставки!")
         return
 
+    # Выбор самовывоз или доставка на точку для тех, у кого включен самовывоз
+    if owner.pickup:
+        send = bot.send_message(data.from_user.id, "Выберите, доставить на точку или самовывоз:",
+                                reply_markup=pickup_markup())
+        bot.register_next_step_handler(send, process_delivery_point, order=order)
+        return
+
+    # Если самовывоз не включен, то ему нужно выбрать точку для доставки
+    send = bot.send_message(data.from_user.id, "Выберите точку, на которую нужно доставить заказ:",
+                            reply_markup=order_points_markup(owner.points.all()))
+    bot.register_next_step_handler(send, process_delivery_point, order=order, pickup=False)
+    return
+
+
+def start_process_order_items(order: Order, user_id):
+
     products = Product.objects.all().order_by('product_type')
 
     # Главное сообщение с информацией о заказе
-    send = bot.send_message(data.from_user.id, "Ваш новый заказ:\n")
+    send = bot.send_message(user_id, "Ваш новый заказ:\n")
     main_message = {"id": send.message_id, "text": send.text}
 
     # Генерируется сообщение для продукта с его ценой и названием
     product = products[0]
-    message_text = product.generate_message(owner)
-    send = bot.send_message(data.from_user.id, message_text, parse_mode="HTML", reply_markup=order_markup())
+    message_text = product.generate_message(order.owner)
+    send = bot.send_message(user_id, message_text, parse_mode="HTML", reply_markup=order_markup())
     product_message = {"id": send.message_id, "text": send.text}
 
     bot.register_next_step_handler(send, process_new_order_item, main_message=main_message,
-                                   product_message=product_message, owner=owner, employee=employee,
-                                   products=products, ordered_items=dict())
+                                   product_message=product_message, order=order,
+                                   products=products, ordered_items=list())
+
+
+def process_delivery_point(message: telebot.types.Message, **kwargs):
+    if message.content_type != "text":
+        send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
+        bot.register_next_step_handler(send, process_delivery_point, **kwargs)
+        return
+
+    if message.text == "Отмена":
+        bot.send_message(message.from_user.id, "Заказ отменен", reply_markup=ReplyKeyboardRemove())
+        return
+
+    if kwargs.get("pickup") is None:
+
+        if message.text not in ["Доставить на точку", "Самовывоз"]:
+            send = bot.send_message(message.from_user.id, "Воспользуйтесь клавиатурой!")
+            bot.register_next_step_handler(send, process_delivery_point, **kwargs)
+            return
+
+        if message.text == "Доставить на точку":
+            kwargs.update({"pickup": False})
+
+            if kwargs["order"].employee:
+                kwargs["order"].point = kwargs["order"].employee.point
+                start_process_order_items(kwargs["order"], message.from_user.id)
+                return
+
+            send = bot.send_message(message.from_user.id, "Выберите точку, на которую нужно доставить заказ:",
+                                    reply_markup=order_points_markup(kwargs["order"].owner.points.all()))
+            bot.register_next_step_handler(send, process_delivery_point, **kwargs)
+            return
+
+        if message.text == "Самовывоз":
+            if has_order_today(owner=kwargs["order"].owner, pickup=True):
+                send = bot.send_message(message.from_user.id,
+                                        "У вас уже есть заказ на самовыоз сегодня",
+                                        reply_markup=pickup_markup())
+                bot.register_next_step_handler(send, process_delivery_point, **kwargs)
+                return
+            kwargs.update({"pickup": True})
+            kwargs["order"].pickup = True
+            start_process_order_items(kwargs["order"], message.from_user.id)
+            return
+
+    point_address = message.text
+    point = Point.objects.filter(address=point_address).first()
+    if not point:
+        send = bot.send_message(message.from_user.id, "Такой точки нет, выберите из предложенных вариантов:",
+                                reply_markup=order_points_markup(kwargs["order"].owner.points.all()))
+        bot.register_next_step_handler(send, process_delivery_point, **kwargs)
+        return
+
+    if has_order_today(owner=kwargs["order"].owner, point=point):
+        send = bot.send_message(message.from_user.id, "У вас уже есть заказ сегодня на эту точку, выберите другую:",
+                                reply_markup=order_points_markup(kwargs["order"].owner.points.all()))
+        bot.register_next_step_handler(send, process_delivery_point, **kwargs)
+        return
+
+    kwargs["order"].point = point
+    start_process_order_items(kwargs["order"], message.from_user.id)
 
 
 def process_new_order_item(message: telebot.types.Message, **kwargs):
@@ -104,12 +182,10 @@ def process_new_order_item(message: telebot.types.Message, **kwargs):
         count = int(message.text)
 
         # Добавляем информацию о заказанной продукции
-        kwargs.get("ordered_items").update({
-            product: count
-        })
+        kwargs.get("ordered_items").append(OrderItem(order=kwargs["order"], product=product, count=count))
 
         # Вносим информацию о заказе в главное сообщение
-        special_price = product.get_special_price_for_user(kwargs["owner"])
+        special_price = product.get_special_price_for_user(kwargs["order"].owner)
         price = special_price.price * count if special_price else product.price * count
         kwargs["main_message"]["text"] += f"\n   - {product.name} {count} шт. <i>{round(price, 2)} руб.</i>"
         bot.edit_message_text(
@@ -128,108 +204,26 @@ def process_new_order_item(message: telebot.types.Message, **kwargs):
             bot.send_message(message.from_user.id, "Ваш заказ пуст!", reply_markup=ReplyKeyboardRemove())
             return
 
-        # Выбор самовывоз или доставка на точку для тех, у кого включен самовывоз
-        if kwargs["owner"].pickup:
-            send = bot.send_message(message.from_user.id, "Выберите, доставить на точку или самовывоз:",
-                                    reply_markup=pickup_markup())
-            bot.register_next_step_handler(send, process_delivery_point, **kwargs)
-            return
-
-        kwargs["pickup"] = False
-        # Если заказывает владелец, то ему нужно выбрать точку для доставки
-        if not kwargs["employee"]:
-            send = bot.send_message(message.from_user.id, "Выберите точку, на которую нужно доставить заказ:",
-                                    reply_markup=order_points_markup(kwargs["owner"].points.all()))
-            bot.register_next_step_handler(send, process_delivery_point, **kwargs)
-            return
-
-        kwargs["point"] = kwargs["employee"].point
         completing_order(message, **kwargs)
         return
 
     # Генерируется сообщение для следующего продукта с его ценой и названием
     kwargs["products"] = kwargs["products"][1:]
     next_product = kwargs["products"][0]
-    message_text = next_product.generate_message(kwargs["owner"])
+    message_text = next_product.generate_message(kwargs["order"].owner)
     send = bot.send_message(message.from_user.id, message_text, parse_mode="HTML", reply_markup=order_markup())
     kwargs["product_message"] = {"id": send.message_id, "text": send.text}
 
     bot.register_next_step_handler(send, process_new_order_item, **kwargs)
 
 
-def process_delivery_point(message: telebot.types.Message, **kwargs):
-    if message.content_type != "text":
-        send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
-        bot.register_next_step_handler(send, process_delivery_point, **kwargs)
-        return
-
-    if message.text == "Отмена":
-        bot.send_message(message.from_user.id, "Заказ отменен", reply_markup=ReplyKeyboardRemove())
-        return
-
-    if kwargs.get("pickup") is None:
-
-        if message.text not in ["Доставить на точку", "Самовывоз"]:
-            send = bot.send_message(message.from_user.id, "Воспользуйтесь клавиатурой!")
-            bot.register_next_step_handler(send, process_delivery_point, **kwargs)
-            return
-
-        if message.text == "Доставить на точку":
-            kwargs.update({"pickup": False})
-
-            if kwargs["employee"]:
-                kwargs["point"] = kwargs["employee"].point
-                completing_order(message, **kwargs)
-                return
-
-            send = bot.send_message(message.from_user.id, "Выберите точку, на которую нужно доставить заказ:",
-                                    reply_markup=order_points_markup(kwargs["owner"].points.all()))
-            bot.register_next_step_handler(send, process_delivery_point, **kwargs)
-            return
-
-        if message.text == "Самовывоз":
-            if has_order_today(owner=kwargs["owner"], pickup=True):
-                send = bot.send_message(message.from_user.id,
-                                        "У вас уже есть заказ на самовыоз сегодня",
-                                        reply_markup=pickup_markup())
-                bot.register_next_step_handler(send, process_delivery_point, **kwargs)
-                return
-            kwargs.update({"pickup": True})
-            completing_order(message, **kwargs)
-            return
-
-    point_address = message.text
-    point = Point.objects.filter(address=point_address).first()
-    if not point:
-        send = bot.send_message(message.from_user.id, "Такой точки нет, выберите из предложенных вариантов:",
-                                reply_markup=order_points_markup(kwargs["owner"].points.all()))
-        bot.register_next_step_handler(send, process_delivery_point, **kwargs)
-        return
-
-    if has_order_today(owner=kwargs["owner"], point=point):
-        send = bot.send_message(message.from_user.id, "У вас уже есть заказ сегодня на эту точку, выберите другую:",
-                                reply_markup=order_points_markup(kwargs["owner"].points.all()))
-        bot.register_next_step_handler(send, process_delivery_point, **kwargs)
-        return
-
-    kwargs["point"] = point
-    completing_order(message, **kwargs)
-
-
 @order_acceptance(bot=bot)
 def completing_order(message: telebot.types.Message, **kwargs):
-    if kwargs["employee"]:
-        if kwargs.get("pickup"):
-            order = Order.objects.create(owner=kwargs["owner"], employee=kwargs["employee"], pickup=True)
-        else:
-            order = Order.objects.create(owner=kwargs["owner"], employee=kwargs["employee"], point=kwargs["point"])
-    else:
-        if kwargs.get("pickup"):
-            order = Order.objects.create(owner=kwargs["owner"], pickup=True)
-        else:
-            order = Order.objects.create(owner=kwargs["owner"], point=kwargs["point"])
+    order = kwargs["order"]
+    order.save()
 
-    order.fill(kwargs["ordered_items"])
+    for item in kwargs["ordered_items"]:
+        item.save()
 
     final_message = (f"Ваш заказ принят!\nИтоговая сумма заказа: {order.get_final_info()[1]} руб."
                      f"\n{'Самовывоз' if order.pickup else f'Достака на точку: {order.point.address}'}"),

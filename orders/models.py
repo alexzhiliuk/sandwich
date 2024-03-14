@@ -62,7 +62,6 @@ class Order(models.Model):
     class Status(models.TextChoices):
         CREATED = "CR", "Создан"
         ACCEPTED = "AC", "Принят"
-        COMPLETED = "CO", "Завершен"
 
     owner = models.ForeignKey(Owner, related_name="orders", on_delete=models.CASCADE, verbose_name="Владелец")
     employee = models.ForeignKey(Employee, related_name="orders", on_delete=models.SET_NULL, null=True, blank=True,
