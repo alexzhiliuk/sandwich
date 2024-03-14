@@ -13,7 +13,6 @@ def order_edit_time(bot: TeleBot):
     def decorator(function):
         @wraps(function)
         def wrap(data: CallbackQuery, *args, **kwargs):
-            return function(data, *args, **kwargs)
             weekday = dt.now().weekday()
             if weekday in [0, 1, 2, 3]:
                 access = time_access(16, 45)
