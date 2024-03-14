@@ -1,5 +1,6 @@
 import re
 from tempfile import NamedTemporaryFile
+from datetime import datetime as dt
 
 import telebot
 from django.conf import settings
@@ -31,16 +32,24 @@ def close_acceptance(request):
 
 
 def daily_report(request):
-    report = ExcelDailyReport(settings.BASE_DIR / "orders/excel_templates/daily_report.xlsx")
+    if request.POST:
+        date = request.POST.get("daily-report-date")
+        try:
+            date = dt.strptime(date, "%Y-%m-%d")
+        except ValueError as err:
+            messages.error(request, "Не получилось скачать отчет!")
+            return HttpResponse(err)
 
-    with NamedTemporaryFile() as tmp:
-        report.wb.save(tmp.name)
-        tmp.seek(0)
-        stream = tmp.read()
+        report = ExcelDailyReport(settings.BASE_DIR / "orders/excel_templates/daily_report.xlsx", date)
 
-    response = HttpResponse(content=stream, content_type='application/ms-excel', )
-    response['Content-Disposition'] = f'attachment; filename=report.xlsx'
-    return response
+        with NamedTemporaryFile() as tmp:
+            report.wb.save(tmp.name)
+            tmp.seek(0)
+            stream = tmp.read()
+
+        response = HttpResponse(content=stream, content_type='application/ms-excel', )
+        response['Content-Disposition'] = f'attachment; filename=report.xlsx'
+        return response
 
 
 @bot.message_handler(commands=["new_order"])

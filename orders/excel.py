@@ -10,9 +10,10 @@ from orders.models import Product, ProductType, Order
 
 class ExcelDailyReport:
 
-    def __init__(self, name):
+    def __init__(self, name, date):
         self.wb = openpyxl.load_workbook(name)
         self.ws = self.wb.worksheets[0]
+        self.date = date
 
         self.cells_indexes = {
             "ФИО": 1,
@@ -97,7 +98,7 @@ class ExcelDailyReport:
 
     def _fill_in_orders(self):
 
-        self.orders = Order.objects.filter(status=Order.Status.ACCEPTED)
+        self.orders = Order.objects.filter(created_at__date=self.date)
 
         row_index = 2
         for order in self.orders:

@@ -44,6 +44,10 @@
     {% endif %}
     <form action="{% url 'daily-report' %}" method="post">
         {% csrf_token %}
+        <input type="date" id="dailyReportDate" name="daily-report-date" required>
         <input type="submit" value="Скачать дневной отчет в EXCEL">
     </form>
+    <script>
+        document.getElementById('dailyReportDate').valueAsDate = new Date();
+    </script>
 {% endblock %}
