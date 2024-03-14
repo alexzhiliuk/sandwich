@@ -7,6 +7,7 @@ from orders.admin import SpecialPriceInline
 class OwnerAdmin(admin.ModelAdmin):
     readonly_fields = ["created_at"]
     search_fields = ["unp", "fio", "phone"]
+    list_display = ["unp", "fio"]
     list_filter = ["is_active"]
     inlines = [SpecialPriceInline]
     change_list_template = "admin/custom_owners_admin.html"
