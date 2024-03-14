@@ -16,6 +16,7 @@ class Owner(models.Model):
     has_notifications = models.BooleanField(default=True, verbose_name="Включить уведомления")
     is_active = models.BooleanField(default=False, verbose_name="Подтвердить регистрацию")
     pickup = models.BooleanField(default=False, verbose_name="Разрешить самовывоз")
+    reduced_limit = models.BooleanField(default=False, verbose_name="Понизить лимит в заказе до 10 шт.")
 
     __original_is_active = None
 
@@ -35,6 +36,11 @@ class Owner(models.Model):
                     pass
         super().save(*args, **kwargs)
         self.__original_is_active = self.is_active
+
+    def get_items_limit(self):
+        if self.reduced_limit:
+            return 10
+        return 15
 
     class Meta:
         verbose_name = "Владелец"

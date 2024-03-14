@@ -1,0 +1,2 @@
+class OrderItemsLimitError(Exception):
+    pass

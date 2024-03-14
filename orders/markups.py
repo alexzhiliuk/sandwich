@@ -60,7 +60,7 @@ def order_products_markup(order_id, page=1):
     if page != pages:
         markup.add(InlineKeyboardButton(">>>", callback_data=f"update_order_{order_id}_page_{page + 1}"))
 
-    markup.add(InlineKeyboardButton("Отмена", callback_data=f"update_order"))
+    markup.add(InlineKeyboardButton("Готово", callback_data=f"update_order"))
 
     return markup
 

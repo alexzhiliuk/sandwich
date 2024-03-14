@@ -2,6 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from accounts.models import Owner, Employee, Point
+from orders.exceptions import OrderItemsLimitError
 
 
 class ProductType(models.Model):
@@ -110,7 +111,11 @@ class Order(models.Model):
 
     def update_item(self, product, count):
         item = self.items.filter(product=product).first()
+        limit = self.owner.get_items_limit()
         if item:
+            delta = count - item.count
+            if self.get_final_info()[0] + delta < limit:
+                raise OrderItemsLimitError(f"Количество продукции меньше лимита ({limit} шт.)!")
             item.count = count
             item.save()
         else:
@@ -118,7 +123,10 @@ class Order(models.Model):
 
     def delete_item(self, product):
         item = self.items.filter(product=product).first()
+        limit = self.owner.get_items_limit()
         if item:
+            if self.get_final_info()[0] - item.count < limit:
+                raise OrderItemsLimitError(f"Количество продукции меньше лимита ({limit} шт.)!")
             item.delete()
 
     def get_details(self):
@@ -187,7 +195,10 @@ class OrderItem(models.Model):
             stats["total_count"] += count
             stats["total_price"] += price
 
-        stats["average_price"] = round(stats["total_price"] / stats["total_count"], 2)
+        try:
+            stats["average_price"] = round(stats["total_price"] / stats["total_count"], 2)
+        except ZeroDivisionError:
+            stats["average_price"] = 0
 
         return stats
 

@@ -34,7 +34,7 @@ class OwnerAdmin(admin.ModelAdmin):
         (
             "Доступ",
             {
-                "fields": ["pickup", "is_active"],
+                "fields": ["pickup", "is_active", "reduced_limit"],
             },
         ),
     ]

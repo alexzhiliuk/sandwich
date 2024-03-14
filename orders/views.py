@@ -204,6 +204,20 @@ def process_new_order_item(message: telebot.types.Message, **kwargs):
             bot.send_message(message.from_user.id, "Ваш заказ пуст!", reply_markup=ReplyKeyboardRemove())
             return
 
+        total_items_count = 0
+        for item in kwargs["ordered_items"]:
+            total_items_count += item.count
+
+        # Проверка на количество заказанной продукции
+        limit = 15
+        if kwargs["order"].owner.reduced_limit:
+            limit = 10
+
+        if total_items_count < limit:
+            bot.send_message(message.from_user.id, f"Минимальное количетсво продукции для заказа - {limit}.\n")
+            start_process_order_items(kwargs["order"], message.from_user.id)
+            return
+
         completing_order(message, **kwargs)
         return
 
@@ -350,13 +364,16 @@ def update_order_product(data: telebot.types.CallbackQuery):
         return
 
     count = int(data.data.split("_")[-1])
-    order.update_item(product, count)
+    try:
+        order.update_item(product, count)
+    except OrderItemsLimitError as err:
+        bot.send_message(data.from_user.id, err)
+    else:
+        order_info = order.generate_message()
 
-    order_info = order.generate_message()
-
-    bot.edit_message_text(order_info, data.from_user.id, data.message.id,
-                          reply_markup=order_products_markup(order_id),
-                          parse_mode="HTML")
+        bot.edit_message_text(order_info, data.from_user.id, data.message.id,
+                              reply_markup=order_products_markup(order_id),
+                              parse_mode="HTML")
 
 
 @bot.callback_query_handler(func=lambda data: re.fullmatch(r"update_order_\d+_product_\d+_count", data.data))
@@ -397,13 +414,16 @@ def process_new_product_count(message: telebot.types.Message, order, product, me
         return
 
     count = int(message.text)
-    order.update_item(product, count)
+    try:
+        order.update_item(product, count)
+    except OrderItemsLimitError as err:
+        bot.send_message(message.from_user.id, err)
+    else:
+        order_info = order.generate_message()
 
-    order_info = order.generate_message()
-
-    bot.edit_message_text(order_info, message.from_user.id, message_id,
-                          reply_markup=order_products_markup(order.id),
-                          parse_mode="HTML")
+        bot.edit_message_text(order_info, message.from_user.id, message_id,
+                              reply_markup=order_products_markup(order.id),
+                              parse_mode="HTML")
 
 
 @bot.callback_query_handler(func=lambda data: re.fullmatch(r"update_order_\d+_product_\d+_delete", data.data))
@@ -428,12 +448,15 @@ def delete_order_product(data: telebot.types.CallbackQuery):
         bot.send_message(data.from_user.id, "Такого продукта не существует!")
         return
 
-    order.delete_item(product)
+    try:
+        order.delete_item(product)
+    except OrderItemsLimitError as err:
+        bot.send_message(data.from_user.id, err)
+    else:
+        order_info = order.generate_message()
 
-    order_info = order.generate_message()
-
-    bot.edit_message_text(order_info, data.from_user.id, data.message.id, parse_mode="HTML",
-                          reply_markup=order_products_markup(order_id))
+        bot.edit_message_text(order_info, data.from_user.id, data.message.id, parse_mode="HTML",
+                              reply_markup=order_products_markup(order_id))
 
 
 bot.add_custom_filter(IsOwner())
