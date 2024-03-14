@@ -60,7 +60,7 @@ def new_order(data: telebot.types.CallbackQuery):
             bot.send_message(data.from_user.id, "Вы не привязаны к точке, обратитесь к вашему руководителю")
             return
         # Проверяется, был ли сделан уже заказ сегодня
-        if has_order_today(employee=employee):
+        if has_order_today(owner=owner, point=employee.point):
             bot.send_message(data.from_user.id, "Сегодня вы уже сделали заказ. Можете его редактировать")
             return
 

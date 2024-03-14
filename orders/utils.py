@@ -22,40 +22,23 @@ def get_weekends_dates():
     return dates
 
 
-def has_order_today(employee=None, owner=None, point=None, pickup=False):
-    if employee:
-        last_order = Order.objects.filter(employee=employee).order_by("-created_at").first()
-        if not last_order:
-            return False
-
-        weekday = date.today().weekday()
-        if weekday in [0, 1, 2, 3]:
-            if date.today() == last_order.created_at.date():
-                return True
-        else:
-            dates = get_weekends_dates()
-            if last_order.created_at.date() in dates:
-                return True
-
+def has_order_today(owner, point=None, pickup=False):
+    last_order = Order.objects.filter(
+        owner=owner, point=point, pickup=pickup
+    ).order_by("-created_at").first()
+    if not last_order:
         return False
 
-    if owner:
-        last_order = Order.objects.filter(
-            owner=owner, employee=None, point=point, pickup=pickup
-        ).order_by("-created_at").first()
-        if not last_order:
-            return False
+    weekday = date.today().weekday()
+    if weekday in [0, 1, 2, 3]:
+        if date.today() == last_order.created_at.date():
+            return True
+    else:
+        dates = get_weekends_dates()
+        if last_order.created_at.date() in dates:
+            return True
 
-        weekday = date.today().weekday()
-        if weekday in [0, 1, 2, 3]:
-            if date.today() == last_order.created_at.date():
-                return True
-        else:
-            dates = get_weekends_dates()
-            if last_order.created_at.date() in dates:
-                return True
-
-        return False
+    return False
 
 
 def time_access(hour, minute):
