@@ -9,31 +9,38 @@ from orders.models import Product, ProductType, Order
 
 
 class ExcelDailyReport:
+    cells_indexes = {
+        "ФИО": 1,
+        "УНП": 2,
+        "000000039": 3,
+        "000000036": 5,
+        "000000280": 7,
+        "000000038": 9,
+        "000000397": 11,
+        "000000399": 13,
+        "000000245": 15,
+        "000000246": 17,
+        "000000259": 19,
+        "000000400": 21,
+        "000000402": 23,
+        "000000401": 25,
+        "000000404": 27,
+        "000000406": 29,
+        "000000405": 31,
+        "000000403": 33,
+        "Итого": 35,
+        "Пункт разгрузки и примечание": 36,
+    }
 
     def __init__(self, name, date):
         self.wb = openpyxl.load_workbook(name)
         self.ws = self.wb.worksheets[0]
         self.date = date
 
-        self.cells_indexes = {
-            "ФИО": 1,
-            "УНП": 2,
-            "000000039": 3,
-            "000000036": 5,
-            "000000280": 7,
-            "000000038": 9,
-            "000000397": 11,
-            "000000399": 13,
-            "000000245": 15,
-            "000000246": 17,
-            "000000259": 19,
-            "Итого": 22,
-            "Пункт разгрузки и примечание": 23,
-        }
-        self.formula_fields = [3, 5, 7, 9, 11, 13, 15, 17, 19, 22]
+        self.formula_fields = [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35]
 
         self._create_styles()
-        self._fill_in_orders()
+        self._write()
 
         for col in self.ws.iter_cols():
             for cell in col:
@@ -62,39 +69,46 @@ class ExcelDailyReport:
 
         self.center_alignment = Alignment(horizontal='center')
 
-    def _get_order_row(self, order, row_index):
-        row = dict()
-        row["ФИО"] = order.owner.fio
-        row["УНП"] = order.owner.unp
+    def _fill_in_order_row_simple_info(self, order):
+        self.row["ФИО"] = order.owner.fio
+        self.row["УНП"] = order.owner.unp
 
         if order.point:
-            row["Пункт разгрузки и примечание"] = order.point.address
+            self.row["Пункт разгрузки и примечание"] = order.point.address
         else:
-            row["Пункт разгрузки и примечание"] = "Самовывоз"
+            self.row["Пункт разгрузки и примечание"] = "Самовывоз"
 
+    def _fill_in_order_row_products_info(self, order):
         ordered_products = set()
         for item in order.items.all():
             count = item.count
             price = item.price
 
-            row[item.product] = (count, round(price / count, 2))
+            self.row[item.product] = (count, round(price / count, 2))
             ordered_products.add(item.product)
 
         for product in set(Product.objects.all()).difference(ordered_products):
             special_price = product.get_special_price_for_user(order.owner)
             if special_price:
-                row[product] = (None, special_price.price)
+                self.row[product] = (None, special_price.price)
             else:
-                row[product] = (None, product.price)
+                self.row[product] = (None, product.price)
 
-        # Итоги по строке
+    def _fill_in_order_row_summarize(self, row_index):
         sum_fields = []
         for col_num in self.formula_fields[:-1]:
             col_letter = self.ws.cell(1, col_num).column_letter
             sum_fields.append(f"{col_letter}{row_index}")
-        row["Итого"] = f"={'+'.join(sum_fields)}"
+        self.row["Итого"] = f"={'+'.join(sum_fields)}"
 
-        return row
+    def _get_order_row(self, order, row_index):
+        self.row = dict()
+
+        self._fill_in_order_row_simple_info(order)
+        self._fill_in_order_row_products_info(order)
+        self._fill_in_order_row_summarize(row_index)
+
+        return self.row
 
     def _fill_in_orders(self):
 
@@ -123,6 +137,9 @@ class ExcelDailyReport:
 
             row_index += 1
 
+        return row_index
+
+    def _summarize(self, row_index):
         # Итого внизу таблицы
         self.ws.cell(row_index + 1, 1, "ИТОГО:")
         for col_num in self.formula_fields:
@@ -132,4 +149,55 @@ class ExcelDailyReport:
             cell.font = self.title_font
             cell.alignment = self.center_alignment
 
+    def _write(self):
+        row_index = self._fill_in_orders()
+        self._summarize(row_index)
+
+
+class ExcelDriverReport(ExcelDailyReport):
+    cells_indexes = {
+        "ФИО": 1,
+        "УНП": 2,
+        "000000039": 3,
+        "000000036": 5,
+        "000000280": 7,
+        "000000038": 9,
+        "000000397": 11,
+        "000000399": 13,
+        "000000245": 15,
+        "000000246": 17,
+        "000000259": 19,
+        "000000400": 21,
+        "000000402": 23,
+        "000000401": 25,
+        "000000404": 27,
+        "000000406": 29,
+        "000000405": 31,
+        "000000403": 33,
+        "Итого": 35,
+        "Пункт разгрузки и примечание": 36,
+        "Телефон": 37,
+        "Время": 38,
+        "Сумма": 39,
+    }
+
+    def _fill_in_order_row_simple_info(self, order):
+        self.row["ФИО"] = order.owner.fio
+        self.row["УНП"] = order.owner.unp
+
+        if order.point:
+            self.row["Пункт разгрузки и примечание"] = order.point.address
+        else:
+            self.row["Пункт разгрузки и примечание"] = "Самовывоз"
+
+        if order.employee:
+            self.row["Телефон"] = order.employee.phone
+        else:
+            self.row["Телефон"] = order.owner.phone
+
+        self.row["Время"] = order.point.working_hours or "" if order.point else ""
+        self.row["Сумма"] = order.get_final_info()[1]
+
+    def _write(self):
+        self._fill_in_orders()
 

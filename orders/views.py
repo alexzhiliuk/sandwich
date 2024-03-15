@@ -11,7 +11,7 @@ from django.shortcuts import redirect
 from accounts.filters import IsOwner, IsRegistered
 from accounts.utils import get_owner_by_id
 from .decorators import order_edit_time, order_acceptance
-from .excel import ExcelDailyReport
+from .excel import ExcelDailyReport, ExcelDriverReport
 
 from .models import *
 from .markups import *
@@ -34,13 +34,19 @@ def close_acceptance(request):
 def daily_report(request):
     if request.POST:
         date = request.POST.get("daily-report-date")
+        report_type = request.POST.get("report-type")
         try:
             date = dt.strptime(date, "%Y-%m-%d")
         except ValueError as err:
             messages.error(request, "Не получилось скачать отчет!")
             return HttpResponse(err)
 
-        report = ExcelDailyReport(settings.BASE_DIR / "orders/excel_templates/daily_report.xlsx", date)
+        if report_type == "daily":
+            report = ExcelDailyReport(settings.BASE_DIR / "orders/excel_templates/daily_report.xlsx", date)
+        elif report_type == "driver":
+            report = ExcelDriverReport(settings.BASE_DIR / "orders/excel_templates/driver_report.xlsx", date)
+        else:
+            return
 
         with NamedTemporaryFile() as tmp:
             report.wb.save(tmp.name)

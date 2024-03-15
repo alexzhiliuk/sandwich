@@ -44,10 +44,24 @@
     {% endif %}
     <form action="{% url 'daily-report' %}" method="post">
         {% csrf_token %}
-        <input type="date" id="dailyReportDate" name="daily-report-date" required>
-        <input type="submit" value="Скачать дневной отчет в EXCEL">
+        <div style="display: flex; gap: 16px; margin-bottom: 8px;">
+            <div style="display: flex; flex-direction: column;">
+                <label for="dailyReport">Дневной отчет</label>
+                <input type="radio" value="daily" name="report-type" id="dailyReport" checked>
+            </div>
+            <div style="display: flex; flex-direction: column;">
+                <label for="driverReport">Отчет для водителя</label>
+                <input type="radio" value="driver" name="report-type" id="driverReport">
+            </div>
+            <div style="display: flex; flex-direction: column;">
+                <label for="labelmakerReport">Отчет для этикеровщика</label>
+                <input type="radio" value="labelmaker" name="report-type" id="labelmakerReport">
+            </div>
+        </div>
+        <input type="date" id="ReportDate" name="daily-report-date" required>
+        <input type="submit" value="Скачать отчет в EXCEL">
     </form>
     <script>
-        document.getElementById('dailyReportDate').valueAsDate = new Date();
+        document.getElementById('ReportDate').valueAsDate = new Date();
     </script>
 {% endblock %}
