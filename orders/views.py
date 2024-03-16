@@ -11,7 +11,7 @@ from django.shortcuts import redirect
 from accounts.filters import IsOwner, IsRegistered
 from accounts.utils import get_owner_by_id
 from .decorators import order_edit_time, order_acceptance
-from .excel import ExcelDailyReport, ExcelDriverReport
+from .excel import ExcelDailyReport, ExcelDriverReport, ExcelLabelmakerReport
 
 from .models import *
 from .markups import *
@@ -45,8 +45,10 @@ def daily_report(request):
             report = ExcelDailyReport(settings.BASE_DIR / "orders/excel_templates/daily_report.xlsx", date)
         elif report_type == "driver":
             report = ExcelDriverReport(settings.BASE_DIR / "orders/excel_templates/driver_report.xlsx", date)
+        elif report_type == "labelmaker":
+            report = ExcelLabelmakerReport(settings.BASE_DIR / "orders/excel_templates/labelmaker_report.xlsx", date)
         else:
-            return
+            return HttpResponse("Error")
 
         with NamedTemporaryFile() as tmp:
             report.wb.save(tmp.name)
