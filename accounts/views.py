@@ -93,11 +93,19 @@ def process_point_working_hours(message: telebot.types.Message, message_id, addr
         return
 
     user_id = message.chat.id
-    Point.objects.create(
-        owner=Owner.objects.get(tg_id=user_id),
-        address=address,
-        working_hours=message.text
-    )
+    try:
+        Point.objects.create(
+            owner=Owner.objects.get(tg_id=user_id),
+            address=address,
+            working_hours=message.text
+        )
+    except IntegrityError:
+        bot.send_message(
+            message.chat.id,
+            "Точка с таким адресом уже существует! Попробуйте снова"
+        )
+        return
+
     bot.edit_message_text("Ваши точки:", message.from_user.id, message_id, reply_markup=points_markup(
         Owner.objects.get(tg_id=user_id).points.all().values("id", "address")))
     bot.send_message(user_id, f"Точка с адресом <b>{address}</b> добавлена!", parse_mode="HTML")
@@ -171,7 +179,15 @@ def process_editing_point_working_hours(message: telebot.types.Message, message_
     new_working_hours = message.text
     point.address = new_address
     point.working_hours = new_working_hours
-    point.save()
+
+    try:
+        point.save()
+    except IntegrityError:
+        bot.send_message(
+            message.chat.id,
+            "Точка с таким адресом уже существует! Попробуйте снова"
+        )
+        return
 
     bot.edit_message_text(new_address, message.from_user.id, message_id, reply_markup=point_markup(point))
     bot.send_message(message.from_user.id, "Адрес точки изменен!")
