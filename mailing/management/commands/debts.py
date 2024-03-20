@@ -12,6 +12,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         debt = Debt.objects.last()
+        if not debt:
+            self.stdout.write(
+                self.style.SUCCESS('Файла с задолженностями нет!')
+            )
+            return
         debts = ExcelDebtsMailing(settings.BASE_DIR / debt.file.path)
         debts.mailing()
         debt.delete()
