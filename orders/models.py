@@ -188,12 +188,12 @@ class OrderItem(models.Model):
             "total_count": 0,
             "total_price": 0,
             "average_price": 0,
-            "products": {product: 0 for product in Product.objects.values_list("name", flat=True)}
+            "products": {product: 0 for product in Product.objects.values_list("excel_name", flat=True)}
         }
         for item in items:
             count = item.count
             price = item.price
-            stats["products"][item.product.name] += count
+            stats["products"][item.product.excel_name] += count
             stats["total_count"] += count
             stats["total_price"] += price
 

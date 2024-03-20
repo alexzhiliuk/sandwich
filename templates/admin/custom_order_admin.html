@@ -12,12 +12,12 @@
         <table class="stats-table" style="min-width: 100%">
             <thead>
                 <tr>
-                    <th>Всего позиций</th>
-                    <th>Средняя цена</th>
+                    <th>Всего</th>
+                    <th>Ср. цена</th>
                     {% for product in stats.products.keys %}
                     <th>{{ product }}</th>
                     {% endfor %}
-                    <th>Общая сумма</th>
+                    <th>Сумма</th>
                 </tr>
             </thead>
             <tbody>
