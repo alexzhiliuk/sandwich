@@ -3,28 +3,31 @@
 {% load accounts_tags %}
 
 {% block after_related_objects %}
-    <form action="." method="get">
-        <input type="date" id="startPeriodDate" name="start_date" required>
-        <input type="date" id="endPeriodDate" name="end_date" required>
-        <input type="submit" id="selectPeriodSubmit" value="Выбрать период">
-    </form>
-    <button type="submit" id="toggleStats" style="display: flex; padding: 16px; border-radius: 8px; border: none; background: #212121; color: white; cursor: pointer;">
-        Показать/скрыть статистику
-    </button>
-
-    <div class="stats">
-        <div id="month-stats" style="width: 900px; height: 500px"></div>
-    </div>
 
     {% if request.GET.start_date and request.GET.end_date %}
         {% get_stats_for_point point=original start_date=request.GET.start_date end_date=request.GET.end_date as month_stats %}
     {% else %}
         {% get_stats_for_point point=original as month_stats %}
     {% endif %}
+    {% if month_stats %}
+        <form action="." method="get">
+        <input type="date" id="startPeriodDate" name="start_date" required>
+        <input type="date" id="endPeriodDate" name="end_date" required>
+        <input type="submit" id="selectPeriodSubmit" value="Выбрать период">
+        </form>
+        <button type="submit" id="toggleStats" style="display: flex; padding: 16px; border-radius: 8px; border: none; background: #212121; color: white; cursor: pointer;">
+            Показать/скрыть статистику
+        </button>
+
+        <div class="stats">
+            <div id="month-stats" style="width: 900px; height: 500px"></div>
+        </div>
+    {% endif %}
     <h2>{{ month }}</h2>
 
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    {% if month_stats %}
     <script>
         google.charts.load('current', {'packages':['corechart']});
         google.charts.setOnLoadCallback(drawChart);
@@ -70,4 +73,5 @@
             console.log(startDate, endDate)
         })
     </script>
+    {% endif %}
 {% endblock %}
