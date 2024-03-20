@@ -78,23 +78,36 @@ WSGI_APPLICATION = 'app.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
 
-DATABASES = {
-   'default': {
-       'ENGINE': 'django.db.backends.postgresql',
-       'NAME': os.getenv('DB_NAME', 'buter'),
-       'USER': os.getenv('DB_USER', 'postgres'),
-       'PASSWORD': os.getenv('DB_PASSWORD', 'root'),
-       'HOST': os.getenv('DB_HOST', '127.0.0.1'),
-       'PORT': os.getenv('DB_PORT', '5432'),
-   }
-}
+if os.getenv('DB_TYPE') == "SQLITE":
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+elif os.getenv('DB_TYPE') == "MYSQL":
+    DATABASES = {
+       'default': {
+           'ENGINE': 'django.db.backends.mysql',
+           'NAME': os.getenv('DB_NAME', 'buter'),
+           'USER': os.getenv('DB_USER', 'root'),
+           'PASSWORD': os.getenv('DB_PASSWORD', 'root'),
+           'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+           'PORT': os.getenv('DB_PORT', '3306'),
+       }
+    }
+else:
+    DATABASES = {
+       'default': {
+           'ENGINE': 'django.db.backends.postgresql',
+           'NAME': os.getenv('DB_NAME', 'buter'),
+           'USER': os.getenv('DB_USER', 'postgres'),
+           'PASSWORD': os.getenv('DB_PASSWORD', 'root'),
+           'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+           'PORT': os.getenv('DB_PORT', '5432'),
+       }
+    }
 
 
 # Password validation
@@ -132,6 +145,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.getenv('STATIC_ROOT', BASE_DIR / "staticfiles")
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
