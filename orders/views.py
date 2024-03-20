@@ -43,10 +43,13 @@ def daily_report(request):
 
         if report_type == "daily":
             report = ExcelDailyReport(settings.BASE_DIR / "orders/excel_templates/daily_report.xlsx", date)
+            filename = f"tablitsa-1C-{date.strftime('%Y-%m-%d')}.xlsx"
         elif report_type == "driver":
             report = ExcelDriverReport(settings.BASE_DIR / "orders/excel_templates/driver_report.xlsx", date)
+            filename = f"tablitsa-voditeli-{date.strftime('%Y-%m-%d')}.xlsx"
         elif report_type == "labelmaker":
             report = ExcelLabelmakerReport(settings.BASE_DIR / "orders/excel_templates/labelmaker_report.xlsx", date)
+            filename = f"tablitsa-etiketki-{date.strftime('%Y-%m-%d')}.xlsx"
         else:
             return HttpResponse("Error")
 
@@ -56,7 +59,7 @@ def daily_report(request):
             stream = tmp.read()
 
         response = HttpResponse(content=stream, content_type='application/ms-excel', )
-        response['Content-Disposition'] = f'attachment; filename=report.xlsx'
+        response['Content-Disposition'] = f'attachment; filename={filename}'
         return response
 
 
