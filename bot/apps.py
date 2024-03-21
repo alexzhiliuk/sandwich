@@ -10,7 +10,7 @@ class BotConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'bot'
 
-    bot = telebot.TeleBot(token=settings.BOT_TOKEN)
+    bot = telebot.TeleBot(token=settings.BOT_TOKEN, threaded=False)
     webhook = os.getenv("WEBHOOK", "w5pgqetd4i.loclx.io")
 
     def ready(self):
