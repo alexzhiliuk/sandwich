@@ -24,8 +24,8 @@ class Product(models.Model):
     name = models.CharField(max_length=128, unique=True, verbose_name="Название")
     price = models.FloatField(verbose_name="Цена")
 
-    excel_name = models.CharField(max_length=32, verbose_name="Название для Excel")
-    excel_code = models.CharField(max_length=32, verbose_name="Код товара для Excel")
+    excel_name = models.CharField(max_length=32, unique=True, verbose_name="Название для Excel")
+    excel_code = models.CharField(max_length=32, unique=True, verbose_name="Код товара для Excel")
 
     def __str__(self):
         return f"{self.name}: {self.price} руб."
