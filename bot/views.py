@@ -38,7 +38,13 @@ def start(message: telebot.types.Message):
         bot.register_next_step_handler(send, process_employee_fio, owner)
         return
 
-    bot.send_message(message.chat.id, 'Стартовое сообщение. Команды: \n/reg\n/menu')
+    bot.send_message(
+        message.chat.id,
+        'Добро пожаловать! Если Вы уже зарегистрированы, то можете воспользовататься следующими коммандами: \n\n'
+        '/new_order - Создать новый заказ\n'
+        '/menu - Главное меню, в котором Вы можете управлять своими точками и сотрудниками (Только для владельцев)\n\n'
+        'Если Вы еще не зарегистрированы в боте, то воспользуйтесь командой /reg'
+    )
 
 
 @bot.message_handler(commands=['menu'])
