@@ -64,7 +64,6 @@ def daily_report(request):
 
 
 @bot.message_handler(commands=["new_order"])
-@bot.callback_query_handler(func=lambda data: re.fullmatch(r"new_order", data.data))
 @order_acceptance(bot=bot)
 def new_order(data: telebot.types.CallbackQuery):
     # Проверка на регистрацию + определение владельца (нужно для спеццены)
@@ -264,7 +263,7 @@ def completing_order(message: telebot.types.Message, **kwargs):
     bot.send_message(message.from_user.id, final_message, reply_markup=ReplyKeyboardRemove())
 
 
-@bot.callback_query_handler(func=lambda data: re.fullmatch(r"update_order", data.data))
+@bot.message_handler(commands=["edit_order"])
 @order_edit_time(bot=bot)
 def update_order(data: telebot.types.CallbackQuery):
     # Проверка на регистрацию
