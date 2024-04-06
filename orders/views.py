@@ -10,6 +10,7 @@ from django.shortcuts import redirect
 
 from accounts.filters import IsOwner, IsRegistered
 from accounts.utils import get_owner_by_id
+from bot.decorators import cancel
 from .decorators import order_edit_time, order_acceptance
 from .excel import ExcelDailyReport, ExcelDriverReport, ExcelLabelmakerReport
 
@@ -120,6 +121,7 @@ def start_process_order_items(order: Order, user_id):
                                    products=products, ordered_items=list())
 
 
+@cancel(bot=bot, cancel_message="Заказ отменен!")
 def process_delivery_point(message: telebot.types.Message, **kwargs):
     if message.content_type != "text":
         send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
@@ -180,6 +182,7 @@ def process_delivery_point(message: telebot.types.Message, **kwargs):
     start_process_order_items(kwargs["order"], message.from_user.id)
 
 
+@cancel(bot=bot, cancel_message="Заказ отменен!")
 def process_new_order_item(message: telebot.types.Message, **kwargs):
     if message.content_type != "text":
         send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
@@ -265,7 +268,28 @@ def completing_order(message: telebot.types.Message, **kwargs):
 
 @bot.message_handler(commands=["edit_order"])
 @order_edit_time(bot=bot)
-def update_order(data: telebot.types.CallbackQuery):
+def update_order(message: telebot.types.Message):
+    # Проверка на регистрацию
+    user_id = message.from_user.id
+    owner, employee = get_owner_by_id(user_id)
+    if not owner:
+        bot.send_message(message.from_user.id, "Вы не заргеистрированы")
+        return
+    if employee:
+        orders = Order.objects.filter(status=Order.Status.CREATED, employee=employee)
+    else:
+        orders = Order.objects.filter(status=Order.Status.CREATED, owner=owner, employee=None).values("id", "created_at")
+
+    if not orders:
+        bot.send_message(message.from_user.id, "У вас нет заказов, которые можно редактировать")
+        return
+
+    bot.send_message(message.from_user.id, "Выберите заказ, который хотите редактировать:",
+                     reply_markup=orders_markup(orders))
+
+
+@bot.callback_query_handler(func=lambda data: re.fullmatch(r"update_order_ready", data.data))
+def update_order_ready(data: telebot.types.CallbackQuery):
     # Проверка на регистрацию
     user_id = data.from_user.id
     owner, employee = get_owner_by_id(user_id)
@@ -274,20 +298,11 @@ def update_order(data: telebot.types.CallbackQuery):
         return
     if employee:
         orders = Order.objects.filter(status=Order.Status.CREATED, employee=employee)
-        # ...
-        return
-
-    orders = Order.objects.filter(status=Order.Status.CREATED, owner=owner, employee=None).values("id", "created_at")
-    if not orders:
-        bot.send_message(data.from_user.id, "У вас нет заказов, которые можно редактировать")
-        return
-
-    if "меню:" in data.message.text.lower():
-        bot.send_message(data.from_user.id, "Выберите заказ, который хотите редактировать:",
-                         reply_markup=orders_markup(orders))
     else:
-        bot.edit_message_text("Выберите заказ, который хотите редактировать:", data.from_user.id, data.message.id,
-                              reply_markup=orders_markup(orders))
+        orders = Order.objects.filter(status=Order.Status.CREATED, owner=owner, employee=None).values("id", "created_at")
+
+    bot.delete_messages(data.from_user.id, [data.message.message_id])
+    bot.send_message(data.from_user.id, "Заказ успешно обновлен!")
 
 
 @bot.callback_query_handler(func=lambda data: re.fullmatch(r"update_order_\d+", data.data))
@@ -421,6 +436,7 @@ def get_new_product_count(data: telebot.types.CallbackQuery):
     bot.register_next_step_handler(send, process_new_product_count, order, product, data.message.id)
 
 
+@cancel(bot=bot, cancel_message="Выбор нового количества отменен!")
 def process_new_product_count(message: telebot.types.Message, order, product, message_id):
     if message.content_type != "text":
         send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
