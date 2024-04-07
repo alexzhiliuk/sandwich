@@ -65,10 +65,30 @@ def process_unp(message: telebot.types.Message):
                          "Пользователь с таким УНП уже зарегистрирован. Если вы хотите зарегистрироваться как сотрудник, то попросите у владельца прислать вам специальную ссылку для регистрации")
         return
 
+    send = bot.send_message(message.from_user.id, "Введите пароль:")
+    bot.register_next_step_handler(send, process_password, owner)
+
+
+@cancel(bot=bot)
+def process_password(message: telebot.types.Message, owner):
+    if message.content_type != "text":
+        send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
+        bot.register_next_step_handler(send, process_password, owner)
+        return
+
+    password = message.text
+
+    if owner.reg_pass != password:
+        send = bot.send_message(message.from_user.id, "Неверный пароль, попробуйте еще раз")
+        bot.register_next_step_handler(send, process_password, owner)
+        return
+
     owner.tg_id = message.from_user.id
     owner.save()
 
-    bot.send_message(message.chat.id, "Регистрация завершена!")
+    bot.send_message(message.chat.id, "Регистрация завершена! Теперь Вы можете создавать заказы и управлять своими "
+                                      "точками и сотрудниками")
+
 
 
 @bot.callback_query_handler(is_owner=True, func=lambda data: re.fullmatch(r"add_point", data.data))
