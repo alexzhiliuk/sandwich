@@ -25,7 +25,8 @@ def order_edit_time(bot: TeleBot):
             if access:
                 return function(data, *args, **kwargs)
             else:
-                bot.send_message(data.from_user.id, "Уже слишком поздно")
+                bot.send_message(data.from_user.id, "Редактировать заявки можно до 16:45 с понедельника по четверг"
+                                                    " и до 14:00 в воскресенье")
 
         return wrap
 
@@ -39,7 +40,8 @@ def order_acceptance(bot: TeleBot):
             if OrderAcceptance.objects.first().status == OrderAcceptance.Status.OPEN:
                 return function(data, *args, **kwargs)
             else:
-                bot.send_message(data.from_user.id, "Принятие заявок на сегодня закрыто!")
+                bot.send_message(data.from_user.id, "Прием заявок осуществляется с понедельника "
+                                                    "по четверг до 17:00, в воскресенье до 15:00")
 
         return wrap
 
