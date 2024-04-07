@@ -43,7 +43,7 @@ def registration(message: telebot.types.Message):
     bot.register_next_step_handler(send, process_unp)
 
 
-@cancel(bot=bot)
+@cancel(bot=bot, cancel_message="Регистрация отменена")
 def process_unp(message: telebot.types.Message):
     if message.content_type != "text":
         send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
@@ -69,7 +69,7 @@ def process_unp(message: telebot.types.Message):
     bot.register_next_step_handler(send, process_password, owner)
 
 
-@cancel(bot=bot)
+@cancel(bot=bot, cancel_message="Регистрация отменена")
 def process_password(message: telebot.types.Message, owner):
     if message.content_type != "text":
         send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
@@ -90,13 +90,13 @@ def process_password(message: telebot.types.Message, owner):
                                       "точками и сотрудниками")
 
 
-
 @bot.callback_query_handler(is_owner=True, func=lambda data: re.fullmatch(r"add_point", data.data))
 def adding_point(data: telebot.types.CallbackQuery):
     send = bot.send_message(data.from_user.id, "Введите адрес новой точки")
     bot.register_next_step_handler(send, process_point_address, data.message.id)
 
 
+@cancel(bot=bot, cancel_message="Добавление точки отменено")
 def process_point_address(message: telebot.types.Message, message_id):
     if message.content_type != "text":
         send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
@@ -108,6 +108,7 @@ def process_point_address(message: telebot.types.Message, message_id):
     bot.register_next_step_handler(send, process_point_working_hours, message_id, address)
 
 
+@cancel(bot=bot, cancel_message="Добавление точки отменено")
 def process_point_working_hours(message: telebot.types.Message, message_id, address):
     if message.content_type != "text":
         send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
@@ -180,6 +181,7 @@ def edit_point(data: telebot.types.CallbackQuery):
     bot.register_next_step_handler(send, process_editing_point_address, data.message.id, point)
 
 
+@cancel(bot=bot, cancel_message="Изменение точки отменено")
 def process_editing_point_address(message: telebot.types.Message, message_id, point):
     if message.content_type != "text":
         send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
@@ -192,6 +194,7 @@ def process_editing_point_address(message: telebot.types.Message, message_id, po
     bot.register_next_step_handler(send, process_editing_point_working_hours, message_id, point, new_address)
 
 
+@cancel(bot=bot, cancel_message="Изменение точки отменено")
 def process_editing_point_working_hours(message: telebot.types.Message, message_id, point, new_address):
     if message.content_type != "text":
         send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")

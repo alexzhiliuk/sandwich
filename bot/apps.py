@@ -11,7 +11,7 @@ class BotConfig(AppConfig):
     name = 'bot'
 
     bot = telebot.TeleBot(token=settings.BOT_TOKEN, threaded=False)
-    webhook = os.getenv("WEBHOOK", "nr0spbophp.loclx.io")
+    webhook = os.getenv("WEBHOOK", "psd2zf6zze.loclx.io")
 
     def ready(self):
         self.bot.remove_webhook()

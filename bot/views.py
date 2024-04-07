@@ -18,6 +18,19 @@ def index(request):
     return HttpResponse("OK")
 
 
+@bot.message_handler(commands=['menu'])
+def menu(message: telebot.types.Message):
+    user_id = message.from_user.id
+
+    if Owner.objects.filter(tg_id=user_id).exists():
+        bot.send_message(user_id, 'Меню:', reply_markup=owner_menu_markup())
+    elif Employee.objects.filter(tg_id=user_id).exists():
+        bot.send_message(user_id, "Для вас данная функция недоступна, воспользуйтесь командами: "
+                                  "\n\n/new_order - Создать новый заказ\n/edit_order - Редактировать заказ")
+    else:
+        bot.send_message(user_id, "Вы не зарегистрированы либо администратор еще не подтвердил вашу регистрацию!")
+
+
 @bot.message_handler(commands=['start', 'help'])
 @bot.message_handler(content_types=['text'])
 def start(message: telebot.types.Message):
@@ -44,19 +57,7 @@ def start(message: telebot.types.Message):
         'Добро пожаловать! Если Вы уже зарегистрированы, то можете воспользовататься следующими коммандами: \n\n'
         '/new_order - Создать новый заказ\n'
         '/edit_order - Редактировать заказ\n'
-        '/menu - Главное меню, в котором Вы можете управлять своими точками и сотрудниками (Только для владельцев)\n\n'
+        '/menu - Главное меню, в котором Вы можете управлять своими точками и сотрудниками (Только для владельцев)\n'
+        '/cancel - Отменить процесс (Создание, изменение заказа, регистрация, и т.п.)\n\n'
         'Если Вы еще не зарегистрированы в боте, то воспользуйтесь командой /reg'
     )
-
-
-@bot.message_handler(commands=['menu'])
-def menu(message: telebot.types.Message):
-    user_id = message.from_user.id
-
-    if Owner.objects.filter(tg_id=user_id).exists():
-        bot.send_message(user_id, 'Меню:', reply_markup=owner_menu_markup())
-    elif Employee.objects.filter(tg_id=user_id).exists():
-        bot.send_message(user_id, "Для вас данная функция недоступна, воспользуйтесь командами: "
-                                  "\n\n/new_order - Создать новый заказ\n/edit_order - Редактировать заказ")
-    else:
-        bot.send_message(user_id, "Вы не зарегистрированы либо администратор еще не подтвердил вашу регистрацию!")
