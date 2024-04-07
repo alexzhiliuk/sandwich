@@ -34,8 +34,8 @@ def start(message: telebot.types.Message):
                              "С регистрационной ссылкой что-то не так. Обратитесь к администратору")
             return
 
-        send = bot.send_message(message.from_user.id, "Введите ваше ФИО:")
-        bot.register_next_step_handler(send, process_employee_fio, owner)
+        send = bot.send_message(message.from_user.id, "Введите ваш номер телефона:")
+        bot.register_next_step_handler(send, process_employee_phone, owner)
         return
 
     bot.send_message(

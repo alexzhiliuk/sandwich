@@ -1,0 +1,2 @@
+class NewUserPhoneNumberError(Exception):
+    pass

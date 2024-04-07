@@ -3,8 +3,9 @@ import re
 import telebot
 from django.contrib import messages
 from django.shortcuts import redirect
-from telebot import custom_filters
+from telebot.types import ReplyKeyboardRemove
 
+from .exceptions import NewUserPhoneNumberError
 from .models import *
 from django.db.utils import IntegrityError
 from .filters import IsOwner
@@ -13,6 +14,7 @@ from .excel import ExcelRegistrateUsers
 
 from bot.apps import BotConfig
 from bot.decorators import cancel
+from .utils import create_phone_number_from_message
 
 bot = BotConfig.bot
 
@@ -60,7 +62,7 @@ def process_unp(message: telebot.types.Message):
     # Если сотрудник попытается зарегистрировать через УНП
     if owner.tg_id:
         bot.send_message(message.from_user.id,
-                                "Пользователь с таким УНП уже зарегистрирован. Если вы хотите зарегистрироваться как сотрудник, то попросите у владельца прислать вам специальную ссылку для регистрации")
+                         "Пользователь с таким УНП уже зарегистрирован. Если вы хотите зарегистрироваться как сотрудник, то попросите у владельца прислать вам специальную ссылку для регистрации")
         return
 
     owner.tg_id = message.from_user.id
@@ -256,7 +258,44 @@ def add_employee(data: telebot.types.CallbackQuery):
                      parse_mode="HTML")
 
 
-def process_employee_fio(message: telebot.types.Message, owner):
+@cancel(bot=bot, cancel_message="Регистрация отменена")
+def process_employee_phone(message: telebot.types.Message, owner):
+    if message.content_type != "text":
+        send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
+        bot.register_next_step_handler(send, process_employee_phone, owner)
+        return
+
+    try:
+        phone = create_phone_number_from_message(message.text)
+    except NewUserPhoneNumberError:
+        send = bot.send_message(message.from_user.id, "Введеный номер телефона слишком короткий. "
+                                                      "Номер телефона должен содержать 9 цифр")
+        bot.register_next_step_handler(send, process_employee_phone, owner)
+        return
+
+    send = bot.send_message(message.from_user.id, f"Это верный номер? <b>{phone}</b>", parse_mode="HTML",
+                            reply_markup=confirm_phone_markup())
+    bot.register_next_step_handler(send, confirm_employee_phone, owner, phone)
+
+
+@cancel(bot=bot, cancel_message="Регистрация отменена")
+def confirm_employee_phone(message: telebot.types.Message, owner, phone):
+    if message.content_type != "text":
+        send = bot.send_message(message.from_user.id, "Сообщение должно содержать 'Да' либо 'Нет'")
+        bot.register_next_step_handler(send, confirm_employee_phone, owner, phone, reply_markup=confirm_phone_markup())
+        return
+
+    if message.text.lower() == "да":
+        send = bot.send_message(message.from_user.id, "Введите Ваше ФИО:", reply_markup=ReplyKeyboardRemove())
+        bot.register_next_step_handler(send, process_employee_fio, owner, phone)
+        return
+
+    send = bot.send_message(message.from_user.id, "Введите номер телефона еще раз:", reply_markup=ReplyKeyboardRemove())
+    bot.register_next_step_handler(send, process_employee_phone, owner)
+
+
+@cancel(bot=bot, cancel_message="Регистрация отменена")
+def process_employee_fio(message: telebot.types.Message, owner, phone):
     if message.content_type != "text":
         send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
         bot.register_next_step_handler(send, process_employee_fio, owner)
@@ -264,32 +303,18 @@ def process_employee_fio(message: telebot.types.Message, owner):
 
     fio = message.text
 
-    send = bot.send_message(message.chat.id, "Введите номер телефона (не используйте +, - и скобочки):")
-    bot.register_next_step_handler(send, process_employee_phone, owner, fio)
-
-
-def process_employee_phone(message: telebot.types.Message, owner, fio: str):
-    if message.content_type != "text":
-        send = bot.send_message(message.from_user.id, "Сообщение должно содержать только текст!")
-        bot.register_next_step_handler(send, process_employee_phone, owner, fio)
-        return
-
-    phone = message.text.replace(" ", "")
-
-    if not phone.isnumeric():
-        send = bot.send_message(message.from_user.id, "Сообщение должно содержать только цифры (без  +, - и скобочек)!")
-        bot.register_next_step_handler(send, process_employee_phone, owner, fio)
-        return
-
     try:
-        Employee.objects.create(owner=owner, fio=fio, tg_id=message.chat.id, phone=phone, is_active=True)
+        Employee.objects.create(owner=owner, fio=fio, tg_id=message.from_user.id, phone=phone, is_active=True)
     except IntegrityError:
         bot.send_message(
             message.chat.id,
             "Аккаунт с такими данными уже зарегистрирован, попробуйте снова или обратитесь к администратору"
         )
     else:
-        bot.send_message(message.chat.id, "Регистрация завершена!")
+        bot.send_message(message.chat.id, "Регистрация завершена! Сообщите об этом своему руководителю. После того, "
+                                          "как он добавит Вас к точке, Вы сможете создавать новые заказы. Вот команды, "
+                                          "которые Вам понадабятся для этого:\n\n/new_order - Создать новый заказ\n"
+                                          "/edit_order - Редактировать заказ")
 
 
 @bot.callback_query_handler(is_owner=True, func=lambda data: re.fullmatch(r"employee_\d+", data.data))

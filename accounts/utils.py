@@ -1,3 +1,6 @@
+import re
+
+from accounts.exceptions import NewUserPhoneNumberError
 from accounts.models import Owner, Employee
 
 
@@ -11,3 +14,12 @@ def get_owner_by_id(tg_id):
         return employee.owner, employee
 
     return None, None
+
+
+def create_phone_number_from_message(message: str):
+    numbers = "".join(re.findall(r'\d+', message))[-9:]
+
+    if len(numbers) < 9:
+        raise NewUserPhoneNumberError()
+    else:
+        return f"+375 ({numbers[:2]}) {numbers[2:5]}-{numbers[5:7]}-{numbers[7:]}"

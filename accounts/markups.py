@@ -1,4 +1,13 @@
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+
+
+def confirm_phone_markup():
+    markup = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+
+    markup.add(KeyboardButton("Да"))
+    markup.add(KeyboardButton("Нет"))
+
+    return markup
 
 
 def owner_menu_markup():
