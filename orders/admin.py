@@ -15,6 +15,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ["product_type"]
     autocomplete_fields = ["product_type"]
     list_display = ["name", "price", "product_type"]
+    list_editable = ["price"]
 
     fieldsets = [
         (
