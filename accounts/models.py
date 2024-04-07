@@ -17,6 +17,7 @@ class Owner(models.Model):
     is_active = models.BooleanField(default=False, verbose_name="Подтвердить регистрацию")
     pickup = models.BooleanField(default=False, verbose_name="Разрешить самовывоз")
     reduced_limit = models.BooleanField(default=False, verbose_name="Понизить лимит в заказе до 10 шт.")
+    reg_pass = models.CharField(max_length=32, default="thebuter", verbose_name="Пароль для регситрации")
 
     __original_is_active = None
 

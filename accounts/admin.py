@@ -16,7 +16,7 @@ class OwnerAdmin(admin.ModelAdmin):
         (
             "Персональная информация",
             {
-                "fields": ["unp", "fio", "phone", "tg_id"],
+                "fields": ["unp", "fio", "phone", "tg_id", "reg_pass"],
             },
         ),
         (
