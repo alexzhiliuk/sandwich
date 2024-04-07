@@ -19,6 +19,7 @@ def index(request):
 
 
 @bot.message_handler(commands=['start', 'help'])
+@bot.message_handler(content_types=['text'])
 def start(message: telebot.types.Message):
     parameter = message.text.split(" ")[-1]
     if parameter.isnumeric():
