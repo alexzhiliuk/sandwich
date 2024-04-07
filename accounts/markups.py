@@ -10,14 +10,6 @@ def owner_menu_markup():
     return markup
 
 
-def employee_menu_markup():
-    markup = InlineKeyboardMarkup()
-
-    markup.add(InlineKeyboardButton("Новый заказ", callback_data="new_order"))
-
-    return markup
-
-
 def points_markup(points, employee=None):
     markup = InlineKeyboardMarkup()
 

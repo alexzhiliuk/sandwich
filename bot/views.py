@@ -18,7 +18,7 @@ def index(request):
     return HttpResponse("OK")
 
 
-@bot.message_handler(commands=['start'])
+@bot.message_handler(commands=['start', 'help'])
 def start(message: telebot.types.Message):
     parameter = message.text.split(" ")[-1]
     if parameter.isnumeric():
@@ -55,9 +55,7 @@ def menu(message: telebot.types.Message):
     if Owner.objects.filter(tg_id=user_id).exists():
         bot.send_message(user_id, 'Меню:', reply_markup=owner_menu_markup())
     elif Employee.objects.filter(tg_id=user_id).exists():
-        bot.send_message(user_id, 'Меню:', reply_markup=employee_menu_markup())
+        bot.send_message(user_id, "Для вас данная функция недоступна, воспользуйтесь командами: "
+                                  "\n\n/new_order - Создать новый заказ\n/edit_order - Редактировать заказ")
     else:
         bot.send_message(user_id, "Вы не зарегистрированы либо администратор еще не подтвердил вашу регистрацию!")
-
-
-bot.add_custom_filter(custom_filters.StateFilter(bot))
