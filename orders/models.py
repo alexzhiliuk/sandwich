@@ -33,6 +33,7 @@ class Product(models.Model):
     class Meta:
         verbose_name = "Продукт"
         verbose_name_plural = "Продукция"
+        ordering = ["product_type"]
 
     def get_special_price_for_user(self, owner):
         special_price = SpecialPrice.objects.filter(product=self, owner=owner).first()
